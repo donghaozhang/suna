@@ -17,6 +17,7 @@ from collections import OrderedDict
 from agent import api as agent_api
 from sandbox import api as sandbox_api
 from services import billing as billing_api
+from services import db_fixes
 
 # Load environment variables (these will be available through config)
 load_dotenv()
@@ -26,136 +27,151 @@ db = DBConnection()
 thread_manager = None
 instance_id = "single"
 
-# Rate limiter state
-ip_tracker = OrderedDict()
-MAX_CONCURRENT_IPS = 25
+# Rate limiting
+call_rates = {}
+MAX_CALLS_PER_MINUTE = 60
+COOLDOWN_PERIOD_SECONDS = 30
+
+# For tracking DB pool initialization
+is_initialized = False
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
-    global thread_manager
-    logger.info(f"Starting up FastAPI application with instance ID: {instance_id} in {config.ENV_MODE.value} mode")
+    # Initialize DB connection before the app starts
+    global db, thread_manager, is_initialized
+    await db.initialize()
     
-    try:
-        # Initialize database
-        await db.initialize()
-        thread_manager = ThreadManager()
-        
-        # Initialize the agent API with shared resources
-        agent_api.initialize(
-            thread_manager,
-            db,
-            instance_id
-        )
-        
-        # Initialize the sandbox API with shared resources
-        sandbox_api.initialize(db)
-        
-        # Initialize Redis connection
-        from services import redis
-        try:
-            await redis.initialize_async()
-            logger.info("Redis connection initialized successfully")
-        except Exception as e:
-            logger.error(f"Failed to initialize Redis connection: {e}")
-            # Continue without Redis - the application will handle Redis failures gracefully
-        
-        # Start background tasks
-        asyncio.create_task(agent_api.restore_running_agent_runs())
-        
-        yield
-        
-        # Clean up agent resources
-        logger.info("Cleaning up agent resources")
-        await agent_api.cleanup()
-        
-        # Clean up Redis connection
-        try:
-            logger.info("Closing Redis connection")
-            await redis.close()
-            logger.info("Redis connection closed successfully")
-        except Exception as e:
-            logger.error(f"Error closing Redis connection: {e}")
-        
-        # Clean up database connection
-        logger.info("Disconnecting from database")
-        await db.disconnect()
-    except Exception as e:
-        logger.error(f"Error during application startup: {e}")
-        raise
+    # Initialize thread manager
+    thread_manager = ThreadManager()
+    
+    # Initialize agent API with resources
+    agent_api.initialize(thread_manager, db, instance_id)
+    
+    is_initialized = True
+    
+    yield
+    
+    # Cleanup agent API
+    await agent_api.cleanup()
+    
+    # Cleanup when the app is shutting down
+    await db.disconnect()
 
 app = FastAPI(lifespan=lifespan)
 
-@app.middleware("http")
-async def log_requests_middleware(request: Request, call_next):
-    start_time = time.time()
-    client_ip = request.client.host
-    method = request.method
-    url = str(request.url)
-    path = request.url.path
-    query_params = str(request.query_params)
-    
-    # Log the incoming request
-    logger.info(f"Request started: {method} {path} from {client_ip} | Query: {query_params}")
-    
-    try:
-        response = await call_next(request)
-        process_time = time.time() - start_time
-        logger.debug(f"Request completed: {method} {path} | Status: {response.status_code} | Time: {process_time:.2f}s")
-        return response
-    except Exception as e:
-        process_time = time.time() - start_time
-        logger.error(f"Request failed: {method} {path} | Error: {str(e)} | Time: {process_time:.2f}s")
-        raise
-
-# Define allowed origins based on environment
-allowed_origins = ["https://www.suna.so", "https://suna.so", "https://staging.suna.so", "http://localhost:3000"]
-
-# Add staging-specific origins
-if config.ENV_MODE == EnvMode.STAGING:
-    allowed_origins.append("http://localhost:3000")
-    
-# Add local-specific origins
-if config.ENV_MODE == EnvMode.LOCAL:
-    allowed_origins.append("http://localhost:3000")
-
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=["*"],  # Allow any origin for now, can be restricted later
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# Include the agent router with a prefix
-app.include_router(agent_api.router, prefix="/api")
+# Register the agent API router
+app.include_router(agent_api.router, prefix="/api", tags=["agent"])
 
-# Include the sandbox router with a prefix
-app.include_router(sandbox_api.router, prefix="/api")
+# Register the sandbox API router
+app.include_router(sandbox_api.router, prefix="/api/sandbox", tags=["sandbox"])
 
-# Include the billing router with a prefix
-app.include_router(billing_api.router, prefix="/api")
+# Register the billing API router
+app.include_router(billing_api.router, prefix="/api/billing", tags=["billing"])
+
+# Register the db_fixes router
+app.include_router(db_fixes.router, prefix="/api", tags=["db-fixes"])
+
+async def check_rate_limit(request: Request):
+    # Skip rate limiting in development mode
+    if config.ENV_MODE == EnvMode.LOCAL:
+        return True, 0
+    
+    # Get client IP
+    client_ip = request.client.host if request.client else "unknown"
+    
+    # Get current time
+    current_time = time.time()
+    
+    # Get or create call history for this IP
+    if client_ip not in call_rates:
+        call_rates[client_ip] = OrderedDict()
+    
+    # Remove old timestamps
+    while call_rates[client_ip] and list(call_rates[client_ip].keys())[0] < current_time - 60:
+        call_rates[client_ip].popitem(last=False)
+    
+    # Count calls in the last minute
+    calls_in_last_minute = len(call_rates[client_ip])
+    
+    # Check if exceeded rate limit
+    if calls_in_last_minute >= MAX_CALLS_PER_MINUTE:
+        # Get oldest timestamp
+        oldest_timestamp = list(call_rates[client_ip].keys())[0]
+        cooldown_time = oldest_timestamp + 60 - current_time
+        
+        return False, cooldown_time
+    
+    # Record this call
+    call_rates[client_ip][current_time] = True
+    
+    return True, 0
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    # Skip rate limiting for certain paths
+    if request.url.path in ["/", "/api/health", "/docs", "/openapi.json"]:
+        return await call_next(request)
+    
+    # Check rate limit
+    allowed, cooldown_time = await check_rate_limit(request)
+    
+    if not allowed:
+        return JSONResponse(
+            status_code=429,
+            content={
+                "detail": f"Rate limit exceeded. Try again in {cooldown_time:.1f} seconds."
+            },
+        )
+    
+    response = await call_next(request)
+    return response
+
+@app.middleware("http")
+async def db_initialization_middleware(request: Request, call_next):
+    global is_initialized
+    
+    # Skip for health check
+    if request.url.path == "/api/health":
+        return await call_next(request)
+    
+    # If DB is not initialized, wait for a bit
+    timeout = 10  # 10 seconds timeout
+    start_time = time.time()
+    while not is_initialized and time.time() - start_time < timeout:
+        await asyncio.sleep(0.5)
+    
+    if not is_initialized:
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "Database initialization in progress. Please try again later."}
+        )
+    
+    return await call_next(request)
 
 @app.get("/api/health")
 async def health_check():
-    """Health check endpoint to verify API is working."""
-    logger.info("Health check endpoint called")
+    """
+    Health check endpoint for the API
+    Returns basic health information and config
+    """
     return {
-        "status": "ok", 
+        "status": "ok",
+        "instance": instance_id,
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "instance_id": instance_id
+        "environment": config.ENV_MODE.value,
+        "db_initialized": is_initialized
     }
 
 if __name__ == "__main__":
     import uvicorn
     
-    workers = 2
-    
-    logger.info(f"Starting server on 0.0.0.0:8000 with {workers} workers")
-    uvicorn.run(
-        "api:app", 
-        host="0.0.0.0", 
-        port=8000,
-        workers=workers,
-        reload=True
-    )
+    uvicorn.run("api:app", host="0.0.0.0", port=8000, reload=True)

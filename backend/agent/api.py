@@ -33,7 +33,7 @@ REDIS_RESPONSE_LIST_TTL = 3600 * 24
 
 MODEL_NAME_ALIASES = {
     # Short names to full names
-    "sonnet-3.7": "anthropic/claude-3-7-sonnet-latest",
+    "sonnet-3.7": "openrouter/anthropic/claude-3.7-sonnet",
     "gpt-4.1": "openai/gpt-4.1-2025-04-14",
     "gpt-4o": "openai/gpt-4o",
     "gpt-4-turbo": "openai/gpt-4-turbo",
@@ -44,7 +44,8 @@ MODEL_NAME_ALIASES = {
     "grok-3-mini": "xai/grok-3-mini-fast-beta",
 
     # Also include full names as keys to ensure they map to themselves
-    "anthropic/claude-3-7-sonnet-latest": "anthropic/claude-3-7-sonnet-latest",
+    "anthropic/claude-3.7-sonnet": "openrouter/anthropic/claude-3.7-sonnet",
+    "openrouter/anthropic/claude-3.7-sonnet": "openrouter/anthropic/claude-3.7-sonnet",
     "openai/gpt-4.1-2025-04-14": "openai/gpt-4.1-2025-04-14",
     "openai/gpt-4o": "openai/gpt-4o",
     "openai/gpt-4-turbo": "openai/gpt-4-turbo",

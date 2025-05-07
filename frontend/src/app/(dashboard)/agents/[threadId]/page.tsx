@@ -209,7 +209,7 @@ export default function ThreadPage({ params }: { params: Promise<ThreadParams> }
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [agentRunId, setAgentRunId] = useState<string | null>(null);
+  const [agentRunId, setAgentRunId] = useState<string | number | null>(null);
   const [agentStatus, setAgentStatus] = useState<'idle' | 'running' | 'connecting' | 'error'>('idle');
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
   const [toolCalls, setToolCalls] = useState<ToolCallInput[]>([]);

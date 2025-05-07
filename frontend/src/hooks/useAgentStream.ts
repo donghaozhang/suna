@@ -27,8 +27,8 @@ export interface UseAgentStreamResult {
   textContent: string;
   toolCall: ParsedContent | null;
   error: string | null;
-  agentRunId: string | null; // Expose the currently managed agentRunId
-  startStreaming: (runId: string) => void;
+  agentRunId: string | number | null; // Updated to handle both string and number types
+  startStreaming: (runId: string | number) => void;
   stopStreaming: () => Promise<void>;
 }
 
@@ -59,7 +59,7 @@ const mapApiMessagesToUnified = (messagesData: ApiMessageType[] | null | undefin
 };
 
 export function useAgentStream(callbacks: AgentStreamCallbacks, threadId: string, setMessages: (messages: UnifiedMessage[]) => void): UseAgentStreamResult {
-  const [agentRunId, setAgentRunId] = useState<string | null>(null);
+  const [agentRunId, setAgentRunId] = useState<string | number | null>(null);
   const [status, setStatus] = useState<string>('idle');
   const [textContent, setTextContent] = useState<string>('');
   const [toolCall, setToolCall] = useState<ParsedContent | null>(null);
@@ -67,7 +67,7 @@ export function useAgentStream(callbacks: AgentStreamCallbacks, threadId: string
   
   const streamCleanupRef = useRef<(() => void) | null>(null);
   const isMountedRef = useRef<boolean>(true);
-  const currentRunIdRef = useRef<string | null>(null); // Ref to track the run ID being processed
+  const currentRunIdRef = useRef<string | number | null>(null); // Updated to handle both string and number types
   const threadIdRef = useRef(threadId); // Ref to hold the current threadId
   const setMessagesRef = useRef(setMessages); // Ref to hold the setMessages function
 
@@ -105,7 +105,7 @@ export function useAgentStream(callbacks: AgentStreamCallbacks, threadId: string
   }, [callbacks, error]); // Include error dependency
 
   // Function to handle finalization of a stream (completion, stop, error)
-  const finalizeStream = useCallback((finalStatus: string, runId: string | null = agentRunId) => {
+  const finalizeStream = useCallback((finalStatus: string, runId: string | number | null = agentRunId) => {
     if (!isMountedRef.current) return;
     
     const currentThreadId = threadIdRef.current; // Get current threadId from ref
@@ -406,82 +406,85 @@ export function useAgentStream(callbacks: AgentStreamCallbacks, threadId: string
 
   // --- Public Functions ---
 
-  const startStreaming = useCallback(async (runId: string) => {
-     if (!isMountedRef.current) return;
-     console.log(`[useAgentStream] Received request to start streaming for ${runId}`);
-     
-     // Clean up any previous stream
-     if (streamCleanupRef.current) {
-       console.log('[useAgentStream] Cleaning up existing stream before starting new one.');
-       streamCleanupRef.current();
-       streamCleanupRef.current = null;
-     }
-     
-     // Reset state before starting
-     setTextContent('');
-     setToolCall(null);
-     setError(null);
-     updateStatus('connecting');
-     setAgentRunId(runId);
-     currentRunIdRef.current = runId; // Set the ref immediately
+  const startStreaming = async (runId: string | number) => {
+    console.log(`[useAgentStream] Start streaming requested for ${runId}`);
 
-     try {
-       // *** Crucial check: Verify agent is running BEFORE connecting ***
-       const agentStatus = await getAgentStatus(runId);
-       if (!isMountedRef.current) return; // Check mount status after async call
+    if (!isMountedRef.current) return;
+    
+    console.log(`[useAgentStream] Starting streaming for agent run: ${runId} on thread: ${threadIdRef.current}`);
+    
+    // Clean up any existing stream
+    if (streamCleanupRef.current) {
+      console.log('[useAgentStream] Cleaning up existing stream');
+      streamCleanupRef.current();
+      streamCleanupRef.current = null;
+    }
+    
+    // Reset state and set the new agent run ID
+    setTextContent('');
+    setToolCall(null);
+    setError(null);
+    setStatus('connecting');
+    setAgentRunId(runId);
+    currentRunIdRef.current = runId;
+    
+    try {
+      // *** Crucial check: Verify agent is running BEFORE connecting ***
+      const agentStatus = await getAgentStatus(runId);
+      if (!isMountedRef.current) return; // Check mount status after async call
 
-       if (agentStatus.status !== 'running') {
-         console.warn(`[useAgentStream] Agent run ${runId} is not in running state (status: ${agentStatus.status}). Cannot start stream.`);
-         setError(`Agent run is not running (status: ${agentStatus.status})`);
-         finalizeStream(mapAgentStatus(agentStatus.status) || 'agent_not_running', runId);
-         return;
-       }
+      if (agentStatus.status !== 'running') {
+        console.warn(`[useAgentStream] Agent run ${runId} is not in running state (status: ${agentStatus.status}). Cannot start stream.`);
+        setError(`Agent run is not running (status: ${agentStatus.status})`);
+        finalizeStream(mapAgentStatus(agentStatus.status) || 'agent_not_running', runId);
+        return;
+      }
 
-       // Agent is running, proceed to create the stream
-       console.log(`[useAgentStream] Agent run ${runId} confirmed running. Setting up EventSource.`);
-       const cleanup = streamAgent(runId, {
-         onMessage: handleStreamMessage,
-         onError: handleStreamError,
-         onClose: handleStreamClose,
-       });
-       streamCleanupRef.current = cleanup;
-       // Status will be updated to 'streaming' by the first message received in handleStreamMessage
+      // Agent is running, proceed to create the stream
+      console.log(`[useAgentStream] Agent run ${runId} confirmed running. Setting up EventSource.`);
+      const cleanup = streamAgent(runId, {
+        onMessage: handleStreamMessage,
+        onError: handleStreamError,
+        onClose: handleStreamClose,
+      });
+      streamCleanupRef.current = cleanup;
+      // Status will be updated to 'streaming' by the first message received in handleStreamMessage
 
-     } catch (err) {
-       if (!isMountedRef.current) return; // Check mount status after async call
-       
-       const errorMessage = err instanceof Error ? err.message : String(err);
-       console.error(`[useAgentStream] Error initiating stream for ${runId}: ${errorMessage}`);
-       setError(errorMessage);
-       
-       const isNotFoundError = errorMessage.includes('not found') || 
-                               errorMessage.includes('404') ||
-                               errorMessage.includes('does not exist');
-                               
-       finalizeStream(isNotFoundError ? 'agent_not_running' : 'error', runId);
-     }
-   }, [updateStatus, finalizeStream, handleStreamMessage, handleStreamError, handleStreamClose]); // Add dependencies
+    } catch (err) {
+      if (!isMountedRef.current) return; // Check mount status after async call
+      
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      console.error(`[useAgentStream] Error initiating stream for ${runId}: ${errorMessage}`);
+      setError(errorMessage);
+      
+      const isNotFoundError = errorMessage.includes('not found') || 
+                              errorMessage.includes('404') ||
+                              errorMessage.includes('does not exist');
+                              
+      finalizeStream(isNotFoundError ? 'agent_not_running' : 'error', runId);
+    }
+  };
 
-   const stopStreaming = useCallback(async () => {
-     if (!isMountedRef.current || !agentRunId) return;
-     
-     const runIdToStop = agentRunId;
-     console.log(`[useAgentStream] Stopping stream for agent run ${runIdToStop}`);
+  const stopStreaming = useCallback(async () => {
+    if (!isMountedRef.current || !agentRunId) return;
+    
+    const runIdToStop = agentRunId;
+    console.log(`[useAgentStream] Stopping stream for agent run ${runIdToStop}`);
 
-     // Immediately update status and clean up stream
-     finalizeStream('stopped', runIdToStop); 
+    // Immediately update status and clean up stream
+    finalizeStream('stopped', runIdToStop); 
 
-     try {
-       await stopAgent(runIdToStop);
-       toast.success('Agent stopped.');
-       // finalizeStream already called getAgentStatus implicitly if needed
-     } catch (err) {
-       // Don't revert status here, as the user intended to stop. Just log error.
-       const errorMessage = err instanceof Error ? err.message : String(err);
-       console.error(`[useAgentStream] Error sending stop request for ${runIdToStop}: ${errorMessage}`);
-       toast.error(`Failed to stop agent: ${errorMessage}`);
-     }
-   }, [agentRunId, finalizeStream]); // Add dependencies
+    try {
+      await stopAgent(runIdToStop);
+      toast.success('Agent stopped.');
+      // finalizeStream already called getAgentStatus implicitly if needed
+    } catch (err) {
+      // Don't revert status here, as the user intended to stop. Just log error.
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      console.error(`[useAgentStream] Error sending stop request for ${runIdToStop}: ${errorMessage}`);
+      toast.error(`Failed to stop agent: ${errorMessage}`);
+    }
+  }, [agentRunId, finalizeStream]); // Add dependencies
 
   return {
     status,

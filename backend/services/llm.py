@@ -90,6 +90,7 @@ def prepare_params(
     reasoning_effort: Optional[str] = 'low'
 ) -> Dict[str, Any]:
     """Prepare parameters for the API call."""
+    
     params = {
         "model": model_name,
         "messages": messages,

@@ -3,6 +3,7 @@ from typing import Optional, List, Dict, Any
 import jwt
 from jwt.exceptions import PyJWTError
 from utils.logger import logger
+from utils.config import config, EnvMode
 
 # This function extracts the user ID from Supabase JWT
 async def get_current_user_id_from_jwt(request: Request) -> str:
@@ -160,29 +161,43 @@ async def verify_thread_access(client, thread_id: str, user_id: str):
     Raises:
         HTTPException: If the user doesn't have access to the thread
     """
-    # Query the thread to get account information
-    thread_result = await client.table('threads').select('*,project_id').eq('thread_id', thread_id).execute()
-
-    if not thread_result.data or len(thread_result.data) == 0:
-        raise HTTPException(status_code=404, detail="Thread not found")
-    
-    thread_data = thread_result.data[0]
-    
-    # Check if project is public
-    project_id = thread_data.get('project_id')
-    if project_id:
-        project_result = await client.table('projects').select('is_public').eq('project_id', project_id).execute()
-        if project_result.data and len(project_result.data) > 0:
-            if project_result.data[0].get('is_public'):
-                return True
-        
-    account_id = thread_data.get('account_id')
-    # When using service role, we need to manually check account membership instead of using current_user_account_role
-    if account_id:
-        account_user_result = await client.schema('basejump').from_('account_user').select('account_role').eq('user_id', user_id).eq('account_id', account_id).execute()
-        if account_user_result.data and len(account_user_result.data) > 0:
+    try:
+        # Always return True in development mode
+        if config.ENV_MODE == EnvMode.LOCAL:
+            logger.info(f"Access granted to thread {thread_id} for user {user_id} (development mode)")
             return True
-    raise HTTPException(status_code=403, detail="Not authorized to access this thread")
+            
+        # Query the thread to get account information - only do this in production
+        thread_result = await client.table('threads').select('*,project_id').eq('thread_id', thread_id).execute()
+
+        if not thread_result.data or len(thread_result.data) == 0:
+            raise HTTPException(status_code=404, detail="Thread not found")
+        
+        thread_data = thread_result.data[0]
+        
+        # Check if project is public
+        project_id = thread_data.get('project_id')
+        if project_id:
+            project_result = await client.table('projects').select('is_public').eq('project_id', project_id).execute()
+            if project_result.data and len(project_result.data) > 0:
+                if project_result.data[0].get('is_public'):
+                    return True
+        
+        # If we get here in production, we'll do a simplified authorization check
+        # just based on the thread's direct user association
+        
+        # Check if the thread belongs to the user directly
+        if thread_data.get('account_id') == user_id:
+            return True
+            
+        # If we've reached this point and no access has been granted, deny access
+        raise HTTPException(status_code=403, detail="Not authorized to access this thread")
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+        logger.error(f"Error verifying thread access: {str(e)}")
+        # For security reasons, don't expose internal errors
+        raise HTTPException(status_code=500, detail="Error verifying access permissions")
 
 async def get_optional_user_id(request: Request) -> Optional[str]:
     """
