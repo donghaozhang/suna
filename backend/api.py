@@ -1,23 +1,27 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException, Depends, Response, Query, Path as RoutePath, File, UploadFile, Form, Body, Header
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from contextlib import asynccontextmanager
 from agentpress.thread_manager import ThreadManager
 from services.supabase import DBConnection
 from datetime import datetime, timezone
 from dotenv import load_dotenv
+from utils.logger import logger
 from utils.config import config, EnvMode
 import asyncio
-from utils.logger import logger
 import uuid
 import time
 from collections import OrderedDict
+from pydantic import BaseModel
 
 # Import the agent API module
 from agent import api as agent_api
 from sandbox import api as sandbox_api
 from services import billing as billing_api
 from services import db_fixes
+from utils.config import AppConfig, get_config
+from utils.auth_utils import get_current_user, User
+from services.llm import make_llm_api_call
 
 # Load environment variables (these will be available through config)
 load_dotenv()
@@ -79,6 +83,10 @@ app.include_router(billing_api.router, prefix="/api/billing", tags=["billing"])
 
 # Register the db_fixes router
 app.include_router(db_fixes.router, prefix="/api", tags=["db-fixes"])
+
+# Add a new Pydantic model for the request body
+class GenerateThreadNameRequest(BaseModel):
+    message: str
 
 async def check_rate_limit(request: Request):
     # Skip rate limiting in development mode
@@ -170,6 +178,68 @@ async def health_check():
         "environment": config.ENV_MODE.value,
         "db_initialized": is_initialized
     }
+
+@app.post("/api/generate-thread-name", summary="Generate a concise thread name using an LLM")
+async def generate_thread_name_endpoint(
+    request_data: GenerateThreadNameRequest,
+    current_user: User = Depends(get_current_user),
+    app_config: AppConfig = Depends(get_config)
+):
+    """
+    Generates a concise (2-4 words) thread name based on the initial message.
+    """
+    try:
+        # Standard string formatting, easier to read and less prone to escape issues.
+        system_prompt = (
+            "You are a helpful assistant that generates extremely concise titles "
+            "(2-4 words maximum) for chat threads based on the user's message. "
+            "Respond with only the title, no other text or punctuation."
+        )
+        user_prompt = (
+            f'Generate an extremely brief title (2-4 words only) for a chat thread '
+            f'that starts with this message: "{request_data.message}"'
+        )
+
+        model_to_use = app_config.MODEL_TO_USE
+
+        if not model_to_use:
+            raise HTTPException(status_code=500, detail="LLM model not configured for thread name generation.")
+
+        llm_response = await make_llm_api_call(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            model_name=model_to_use,
+            temperature=0.7,
+            max_tokens=20
+        )
+
+        if isinstance(llm_response, str):
+            generated_name = llm_response.strip()
+        elif hasattr(llm_response, 'choices') and llm_response.choices and hasattr(llm_response.choices[0], 'message') and hasattr(llm_response.choices[0].message, 'content'):
+            generated_name = llm_response.choices[0].message.content.strip()
+        elif isinstance(llm_response, dict) and llm_response.get("choices") and len(llm_response["choices"]) > 0 and isinstance(llm_response["choices"][0], dict) and llm_response["choices"][0].get("message", {}).get("content"):
+            generated_name = llm_response["choices"][0].get("message", {}).get("content", "").strip()
+        else:
+            logger.warning(f"Unexpected LLM response structure for thread name: {llm_response}")
+            default_name = (request_data.message[:47] + "..." if len(request_data.message) > 50 else request_data.message).strip()
+            return {"name": default_name}
+
+        generated_name = generated_name.replace('"', '').replace("'", "")
+
+        if not generated_name:
+            default_name = (request_data.message[:47] + "..." if len(request_data.message) > 50 else request_data.message).strip()
+            return {"name": default_name}
+
+        return {"name": generated_name}
+
+    except HTTPException as http_exc: # Catch HTTPExceptions explicitly to re-raise if needed
+        raise http_exc # Re-raise if it's an HTTPException we threw intentionally
+    except Exception as e:
+        logger.error(f"Error generating thread name via backend: {e}", exc_info=True)
+        default_name = (request_data.message[:47] + "..." if len(request_data.message) > 50 else request_data.message).strip()
+        raise HTTPException(status_code=500, detail=f"Failed to generate thread name. Defaulting to: '{default_name}'. Error: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn

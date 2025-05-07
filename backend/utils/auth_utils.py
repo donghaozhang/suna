@@ -4,6 +4,27 @@ import jwt
 from jwt.exceptions import PyJWTError
 from utils.logger import logger
 from utils.config import config, EnvMode
+from pydantic import BaseModel
+
+# User model for FastAPI dependency
+class User(BaseModel):
+    id: str
+
+async def get_current_user(request: Request) -> User:
+    """
+    Get the current user from the JWT token in the Authorization header.
+    
+    Args:
+        request: The FastAPI request object
+        
+    Returns:
+        User: The user object
+        
+    Raises:
+        HTTPException: If no valid token is found or if the token is invalid
+    """
+    user_id = await get_current_user_id_from_jwt(request)
+    return User(id=user_id)
 
 # This function extracts the user ID from Supabase JWT
 async def get_current_user_id_from_jwt(request: Request) -> str:

@@ -19,6 +19,7 @@ from enum import Enum
 from typing import Dict, Any, Optional, get_type_hints, Union
 from dotenv import load_dotenv
 import logging
+from fastapi import Depends
 
 logger = logging.getLogger(__name__)
 
@@ -241,3 +242,13 @@ class Configuration:
 
 # Create a singleton instance
 config = Configuration() 
+
+class AppConfig:
+    """Application configuration for dependency injection in FastAPI."""
+    def __init__(self):
+        self.MODEL_TO_USE = config.MODEL_TO_USE
+        self.ENV_MODE = config.ENV_MODE
+
+def get_config():
+    """Get the application configuration as a dependency."""
+    return AppConfig() 
