@@ -1,0 +1,102 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Frontend Development Conventions
+
+## Next.js App Router Structure
+
+### Route Organization ([frontend/src/app/](mdc:frontend/src/app/))
+- **Route Groups**: Use parentheses for organization without affecting URL structure
+  - `(dashboard)/` - Dashboard-related pages
+  - `(home)/` - Landing/marketing pages
+- **Dynamic Routes**: Use square brackets for parameters
+  - `[threadId]/` - Thread-specific pages
+  - `[accountSlug]/` - Account-specific pages
+- **Nested Layouts**: Each route group has its own layout component
+
+### Key Route Patterns
+```
+app/
+├── (dashboard)/
+│   ├── (personalAccount)/settings/
+│   ├── (teamAccount)/[accountSlug]/
+│   ├── agents/[threadId]/
+│   └── dashboard/
+├── (home)/
+├── auth/callback/
+└── share/[threadId]/
+```
+
+## Component Organization
+
+### Component Categories ([frontend/src/components/](mdc:frontend/src/components/))
+- **basejump/**: Authentication and account management components
+- **billing/**: Payment and subscription components  
+- **file-renderers/**: File display and preview components
+- **home/**: Landing page components
+  - `sections/` - Page sections
+  - `ui/` - Home-specific UI components
+- **sidebar/**: Navigation components
+- **thread/**: Chat and conversation components
+  - `tool-views/` - Agent tool output displays
+- **ui/**: Shared/reusable UI components
+
+### Component Naming Conventions
+- Use PascalCase for component files
+- Group related components in subdirectories
+- Separate business logic from pure UI components
+
+## State Management Patterns
+
+### React Context ([frontend/src/contexts/](mdc:frontend/src/contexts/))
+- Use for app-wide state (auth, theme, user preferences)
+- Provide TypeScript interfaces for context values
+- Implement proper context providers with default values
+
+### Server State
+- Use Next.js Server Components where possible
+- Leverage Supabase real-time subscriptions for live data
+- Implement proper loading and error states
+
+## UI Component Guidelines
+
+### Styling Approach
+- Use Tailwind CSS for utility-first styling
+- Implement responsive design mobile-first
+- Create reusable component variants with consistent spacing
+
+### Accessibility
+- Include proper ARIA labels and roles
+- Ensure keyboard navigation support
+- Maintain proper heading hierarchy
+- Use semantic HTML elements
+
+## Data Fetching Patterns
+
+### Supabase Integration ([frontend/src/lib/supabase/](mdc:frontend/src/lib/supabase/))
+- Use server-side client for Server Components
+- Use client-side client for interactive components
+- Implement proper error handling and loading states
+- Leverage Supabase auth helpers for user sessions
+
+### API Communication
+- Use Server Actions for form submissions
+- Implement proper type safety with TypeScript
+- Handle API errors gracefully with user feedback
+- Cache responses appropriately
+
+## Development Guidelines
+
+### TypeScript Usage
+- Define proper interfaces for all data structures
+- Use strict mode for better type checking
+- Implement proper error boundaries
+- Type all component props and state
+
+### Performance Optimization
+- Use Next.js Image component for optimized images
+- Implement code splitting for large components
+- Lazy load non-critical components
+- Optimize bundle size with proper imports

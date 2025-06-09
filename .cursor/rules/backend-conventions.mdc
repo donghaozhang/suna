@@ -1,0 +1,113 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Backend Development Conventions
+
+## FastAPI Application Structure
+
+### Main Application ([backend/api.py](mdc:backend/api.py))
+- Entry point for the FastAPI application
+- Configure CORS, middleware, and route registration
+- Handle application lifecycle events
+- Environment configuration and validation
+
+### API Organization
+- **RESTful Design**: Follow REST conventions for endpoints
+- **Route Grouping**: Organize routes by feature/domain
+- **Dependency Injection**: Use FastAPI's dependency system
+- **Request/Response Models**: Use Pydantic models for validation
+
+## Agent Architecture
+
+### Agent Core ([backend/agent/](mdc:backend/agent/))
+- **Agent Logic**: Core agent reasoning and execution
+- **Tool Integration**: Modular tool system for extensibility
+- **State Management**: Thread and conversation state handling
+- **Security**: Sandboxed execution environment integration
+
+### Tool System ([backend/agent/tools/](mdc:backend/agent/tools/))
+- **Modular Design**: Each tool as separate class/module
+- **Standardized Interface**: Consistent tool calling convention
+- **Data Providers**: [backend/agent/tools/data_providers/](mdc:backend/agent/tools/data_providers/)
+  - External API integrations (LinkedIn, Tavily, Firecrawl)
+  - Standardized response formats
+  - Error handling and rate limiting
+
+### Tool Development Patterns
+```python
+# Standard tool interface
+class ToolName:
+    def __init__(self, config):
+        self.config = config
+    
+    async def execute(self, parameters):
+        # Tool implementation
+        return result
+```
+
+## Service Layer ([backend/services/](mdc:backend/services/))
+- **Business Logic**: Separate from API routes
+- **Data Access**: Database interaction patterns
+- **External Integrations**: Third-party service wrappers
+- **Async Operations**: Use async/await for I/O operations
+
+## Database Integration
+
+### Supabase Integration
+- **Authentication**: Supabase Auth integration
+- **Row Level Security**: Implement RLS policies
+- **Real-time**: WebSocket connections for live updates
+- **File Storage**: Supabase Storage for file handling
+
+### Migration Management ([backend/supabase/migrations/](mdc:backend/supabase/migrations/))
+- Use Supabase CLI for schema changes
+- Version control all migrations
+- Test migrations in staging environment
+
+## External Service Integration
+
+### LLM Integration
+- **LiteLLM**: Unified interface for multiple providers
+- **Anthropic**: Primary LLM provider (recommended)
+- **OpenAI**: Secondary provider support
+- **Prompt Engineering**: XML-based tool calling format
+
+### Redis Integration
+- **Session Management**: User session storage
+- **Caching**: API response and computation caching
+- **Rate Limiting**: Request throttling implementation
+- **Background Jobs**: Async task queuing
+
+### Daytona Integration
+- **Sandbox Management**: Container lifecycle management
+- **Security**: Isolated execution environment
+- **Resource Management**: Container resource allocation
+- **Tool Execution**: Agent tool running in sandbox
+
+## Development Best Practices
+
+### Code Organization
+- **Type Hints**: Use Python type hints throughout
+- **Error Handling**: Implement comprehensive error handling
+- **Logging**: Structured logging for debugging and monitoring
+- **Testing**: Unit and integration tests for critical paths
+
+### Security Considerations
+- **Input Validation**: Validate all user inputs
+- **API Key Management**: Secure credential storage
+- **Rate Limiting**: Protect against abuse
+- **Sandbox Security**: Ensure proper container isolation
+
+### Performance Optimization
+- **Async Programming**: Use async/await for I/O operations
+- **Connection Pooling**: Efficient database connections
+- **Caching Strategy**: Redis for frequently accessed data
+- **Background Processing**: Offload heavy operations
+
+## Configuration Management
+- **Environment Variables**: Use .env files for configuration
+- **Secrets Management**: Secure handling of API keys
+- **Feature Flags**: Toggle features based on environment
+- **Health Checks**: Implement service health endpoints

@@ -1,0 +1,71 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Development Workflow & Setup
+
+## Environment Configuration
+
+### Backend Environment ([backend/.env](mdc:backend/.env))
+Required environment variables:
+- `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+- `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_SSL`
+- `DAYTONA_API_KEY`, `DAYTONA_SERVER_URL`, `DAYTONA_TARGET`
+- `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`
+- Optional: `TAVILY_API_KEY`, `FIRECRAWL_API_KEY`, `RAPID_API_KEY`
+
+### Frontend Environment ([frontend/.env.local](mdc:frontend/.env.local))
+Required variables:
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_BACKEND_URL` (localhost:8000/api for local, backend:8000/api for Docker)
+- `NEXT_PUBLIC_URL`
+
+## Local Development Setup
+
+### Prerequisites Installation
+1. **Supabase CLI**: For database migrations
+2. **Redis**: Local installation or Docker
+3. **Python 3.11**: Backend runtime
+4. **Node.js**: Frontend runtime
+5. **Daytona Account**: Agent execution platform
+
+### Development Commands
+```bash
+# Frontend development
+cd frontend && npm run dev
+
+# Backend development  
+cd backend && python api.py
+
+# Database migrations
+supabase db push
+```
+
+### Docker Compose Alternative
+- Use [docker-compose.yaml](mdc:docker-compose.yaml) for local builds
+- Use [docker-compose.ghcr.yaml](mdc:docker-compose.ghcr.yaml) for pre-built images
+- Set `GITHUB_REPOSITORY` environment variable for GHCR images
+
+## Code Organization Patterns
+
+### Backend Structure
+- **API Routes**: Organized by feature in FastAPI
+- **Agent Tools**: [backend/agent/tools/](mdc:backend/agent/tools/)
+- **Data Providers**: [backend/agent/tools/data_providers/](mdc:backend/agent/tools/data_providers/)
+- **Services**: Business logic separation
+- **Utils & Scripts**: [backend/utils/scripts/](mdc:backend/utils/scripts/)
+
+### Frontend Structure
+- **App Router**: [frontend/src/app/](mdc:frontend/src/app/) - Next.js 13+ routing
+- **Components**: Organized by feature/domain
+- **Hooks**: [frontend/src/hooks/](mdc:frontend/src/hooks/) - Custom React hooks
+- **Contexts**: [frontend/src/contexts/](mdc:frontend/src/contexts/) - React context providers
+- **Actions**: [frontend/src/lib/actions/](mdc:frontend/src/lib/actions/) - Server actions
+
+## Development Best Practices
+- Use TypeScript for type safety
+- Follow Next.js App Router conventions
+- Implement proper error handling
+- Use Supabase RLS for security
+- Test agent tools in isolated environments

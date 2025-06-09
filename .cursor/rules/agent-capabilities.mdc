@@ -1,0 +1,123 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Agent Capabilities & Use Cases
+
+## Core Agent Capabilities
+
+### Browser Automation
+- **Web Navigation**: Automated browsing and interaction
+- **Data Extraction**: Scraping content from web pages
+- **Form Handling**: Filling forms and submitting data
+- **Screenshot Capture**: Visual documentation of web content
+- **Technology**: Playwright for reliable browser automation
+
+### Search & Research
+- **Enhanced Search**: Tavily API integration for advanced search
+- **Web Crawling**: Firecrawl API for content extraction
+- **Academic Research**: Scientific paper discovery and analysis
+- **Company Research**: Business intelligence and competitor analysis
+- **LinkedIn Search**: Professional profile and company lookup
+
+### File Management
+- **Document Creation**: Generate PDFs, Excel files, reports
+- **File Processing**: Read, edit, and manipulate various file formats
+- **Data Analysis**: Process and analyze spreadsheet data
+- **File Storage**: Integration with cloud storage services
+
+### API Integration
+- **RapidAPI Services**: Access to hundreds of APIs
+- **Custom Integrations**: Direct API connections
+- **Data Providers**: LinkedIn, Crunchbase, Dealroom integrations
+- **External Tools**: Calendar, email, CRM integrations
+
+## Validated Use Cases
+
+### 1. Business Intelligence
+- **Competitor Analysis**: Market research and competitive landscape
+- **VC Research**: Investment firm discovery and contact information
+- **Startup Research**: Recently funded companies and founder data
+- **Industry Analysis**: Market size, trends, and key players
+
+### 2. Professional Networking
+- **LinkedIn Prospecting**: Candidate and lead discovery
+- **Contact Information**: Email and social media lookup
+- **Profile Analysis**: Skills, experience, and background research
+- **Company Mapping**: Organizational structure and key personnel
+
+### 3. Travel & Event Planning
+- **Trip Planning**: Itinerary creation with weather and activities
+- **Accommodation Research**: Hotel ratings and booking information
+- **Event Management**: Speaker prospecting and venue research
+- **Route Optimization**: Multi-destination travel planning
+
+### 4. Content & Research
+- **Scientific Literature**: Paper discovery and cross-referencing
+- **SEO Analysis**: Website optimization recommendations
+- **Forum Research**: Community-driven information gathering
+- **Market Research**: Industry trends and consumer insights
+
+### 5. Administrative Automation
+- **Excel Automation**: Spreadsheet creation and data entry
+- **Email Drafting**: Personalized outreach campaigns
+- **Document Generation**: Reports, proposals, and presentations
+- **Data Processing**: Cleaning and organizing information
+
+## Agent Tool Categories
+
+### Data Providers ([backend/agent/tools/data_providers/](mdc:backend/agent/tools/data_providers/))
+- **LinkedinProvider**: Professional network data
+- **TavilyProvider**: Enhanced search capabilities
+- **FirecrawlProvider**: Web content extraction
+- **RapidAPIProvider**: Multi-service API access
+
+### Automation Tools
+- **Browser Tools**: Web interaction and automation
+- **File Tools**: Document creation and manipulation
+- **Search Tools**: Information discovery and research
+- **Communication Tools**: Email and messaging automation
+
+## Security & Isolation
+
+### Sandboxed Execution
+- Each agent runs in isolated Docker container
+- No access to host system or other containers
+- Controlled resource allocation and monitoring
+- Secure handling of credentials and sensitive data
+
+### Data Privacy
+- User data remains within the container during execution
+- Configurable data retention policies
+- Secure transmission of results
+- No persistent storage of sensitive information
+
+## Performance Characteristics
+
+### Scalability
+- Horizontal scaling through container orchestration
+- Parallel execution of multiple agent tasks
+- Resource optimization for different task types
+- Load balancing across available resources
+
+### Reliability
+- Error handling and recovery mechanisms
+- Timeout protection for long-running tasks
+- Graceful degradation when services unavailable
+- Comprehensive logging and monitoring
+
+## Development Guidelines
+
+### Adding New Capabilities
+1. Implement tool in [backend/agent/tools/](mdc:backend/agent/tools/)
+2. Follow standardized tool interface
+3. Add comprehensive error handling
+4. Test in isolated environment
+5. Document capability and usage
+
+### Use Case Validation
+- Test with real-world scenarios
+- Measure performance and reliability
+- Validate security and privacy requirements
+- Document best practices and limitations
