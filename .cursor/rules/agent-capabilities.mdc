@@ -1,7 +1,7 @@
 ---
-description:
-globs:
-alwaysApply: false
+description: 
+globs: 
+alwaysApply: true
 ---
 # Agent Capabilities & Use Cases
 
@@ -144,3 +144,4 @@ backend/agent/tools/
 - Measure performance and reliability
 - Validate security and privacy requirements
 - Document best practices and limitations
+

@@ -1,7 +1,7 @@
 ---
-description:
-globs:
-alwaysApply: false
+description: 
+globs: 
+alwaysApply: true
 ---
 # Development Workflow & Setup
 
@@ -92,3 +92,4 @@ supabase db push
 - Implement proper error handling
 - Use Supabase RLS for security
 - Test agent tools in isolated environments
+
