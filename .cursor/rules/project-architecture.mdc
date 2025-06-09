@@ -3,3 +3,188 @@ description:
 globs:
 alwaysApply: false
 ---
+# Suna Project Architecture
+
+## Complete File Structure
+```
+suna/
+├── backend/                    # Python/FastAPI backend services
+│   ├── api.py                 # Main FastAPI application entry
+│   ├── .env.example           # Environment variables template
+│   ├── requirements.txt       # Python dependencies
+│   ├── pyproject.toml         # Poetry configuration
+│   ├── Dockerfile             # Backend container config
+│   ├── agent/                 # Core agent system
+│   │   ├── api.py             # Agent API endpoints
+│   │   ├── run.py             # Agent execution logic
+│   │   ├── prompt.py          # Agent prompting system
+│   │   ├── agent_builder_prompt.py # Agent building prompts
+│   │   ├── gemini_prompt.py   # Gemini-specific prompts
+│   │   ├── tools/             # Agent tool implementations
+│   │   │   ├── computer_use_tool.py    # Computer interaction
+│   │   │   ├── data_providers_tool.py  # External data access
+│   │   │   ├── message_tool.py         # Message handling
+│   │   │   ├── sb_browser_tool.py      # Browser automation
+│   │   │   ├── sb_files_tool.py        # File operations
+│   │   │   ├── sb_shell_tool.py        # Shell commands
+│   │   │   ├── web_search_tool.py      # Web search
+│   │   │   ├── expand_msg_tool.py      # Message expansion
+│   │   │   ├── mcp_tool_wrapper.py     # MCP tool wrapper
+│   │   │   └── data_providers/         # API integrations
+│   │   │       ├── AmazonProvider.py   # Amazon services
+│   │   │       ├── FirecrawlProvider.py # Web scraping
+│   │   │       ├── LinkedinProvider.py # LinkedIn API
+│   │   │       ├── TavilyProvider.py   # Search API
+│   │   │       └── RapidAPIProvider.py # Multi-service API
+│   │   └── sample_responses/  # Sample agent responses
+│   ├── agentpress/            # Agent framework
+│   │   ├── context_manager.py # Conversation context
+│   │   ├── response_processor.py # LLM response handling
+│   │   ├── thread_manager.py  # Thread lifecycle
+│   │   ├── tool_registry.py   # Tool registration
+│   │   └── utils/             # Utility functions
+│   ├── mcp_local/             # Model Context Protocol
+│   │   ├── api.py             # MCP API server
+│   │   ├── client.py          # MCP client
+│   │   └── tools/             # MCP tool integrations
+│   ├── sandbox/               # Execution environment
+│   │   ├── api.py             # Sandbox API server
+│   │   ├── sandbox.py         # Container management
+│   │   ├── tool_base.py       # Base tool class
+│   │   └── docker/            # Docker configurations
+│   ├── services/              # Business logic services
+│   │   ├── billing.py         # Payment processing
+│   │   ├── email.py           # Email notifications
+│   │   ├── llm.py             # LLM integrations
+│   │   ├── redis.py           # Caching service
+│   │   ├── supabase.py        # Database service
+│   │   ├── transcription.py   # Audio transcription
+│   │   └── langfuse.py        # LLM observability
+│   ├── supabase/              # Database configurations
+│   │   └── migrations/        # Schema migrations
+│   └── utils/                 # Utilities and helpers
+├── frontend/                   # Next.js/React application
+│   ├── src/
+│   │   ├── app/               # Next.js App Router
+│   │   │   ├── (dashboard)/   # Dashboard routes
+│   │   │   │   ├── agents/    # Agent management
+│   │   │   │   ├── dashboard/ # Main dashboard
+│   │   │   │   ├── marketplace/ # Agent marketplace
+│   │   │   │   └── projects/  # Project management
+│   │   │   ├── (home)/        # Landing pages
+│   │   │   ├── auth/          # Authentication
+│   │   │   ├── share/         # Public sharing
+│   │   │   └── api/           # API routes
+│   │   ├── components/        # React components
+│   │   │   ├── thread/        # Chat/conversation UI
+│   │   │   ├── sidebar/       # Navigation
+│   │   │   ├── billing/       # Payment components
+│   │   │   ├── basejump/      # Team management
+│   │   │   └── ui/            # Shared UI components
+│   │   ├── hooks/             # Custom React hooks
+│   │   │   └── react-query/   # React Query hooks
+│   │   ├── lib/               # Utilities and configurations
+│   │   │   ├── actions/       # Server actions
+│   │   │   ├── supabase/      # Supabase client
+│   │   │   └── utils/         # Helper functions
+│   │   ├── contexts/          # React contexts
+│   │   └── providers/         # Context providers
+│   └── public/                # Static assets
+├── supabase/                   # Supabase project configuration
+├── docs/                       # Project documentation
+├── setup.py                    # Automated setup script
+├── start.py                    # Development startup script
+├── docker-compose.yaml         # Container orchestration
+└── mise.toml                   # Development environment config
+```
+
+## Architecture Overview
+
+Suna is an open-source AI agent platform with a modern, scalable architecture consisting of four main components:
+
+### 1. Backend API (FastAPI)
+- **Primary Technology**: Python with FastAPI framework
+- **Core Responsibilities**: 
+  - REST API endpoints ([api.py](mdc:backend/api.py))
+  - Agent execution orchestration
+  - LLM integration via LiteLLM
+  - Authentication and authorization
+- **Key Directories**:
+  - [backend/agent/](mdc:backend/agent) - Core agent logic and tools
+  - [backend/services/](mdc:backend/services) - Business logic layer
+  - [backend/agentpress/](mdc:backend/agentpress) - Agent framework
+
+### 2. Frontend Application (Next.js)
+- **Primary Technology**: Next.js 14+ with App Router, React, TypeScript
+- **Core Responsibilities**:
+  - User interface and experience
+  - Real-time chat interface
+  - Dashboard and agent management
+  - Authentication flows
+- **Key Directories**:
+  - [frontend/src/app/](mdc:frontend/src/app) - App Router pages and layouts
+  - [frontend/src/components/](mdc:frontend/src/components) - React components
+  - [frontend/src/hooks/](mdc:frontend/src/hooks) - Custom React hooks
+
+### 3. Agent Execution Environment
+- **Primary Technology**: Docker containers with sandbox isolation
+- **Core Responsibilities**:
+  - Secure agent tool execution
+  - Browser automation via Playwright
+  - File system operations
+  - Shell command execution
+- **Key Files**:
+  - [backend/sandbox/](mdc:backend/sandbox) - Sandbox management
+  - [backend/agent/tools/](mdc:backend/agent/tools) - Tool implementations
+
+### 4. Database & Storage (Supabase)
+- **Primary Technology**: PostgreSQL with Supabase
+- **Core Responsibilities**:
+  - User authentication and authorization
+  - Conversation and thread persistence
+  - File storage and management
+  - Real-time subscriptions
+- **Key Directories**:
+  - [backend/supabase/migrations/](mdc:backend/supabase/migrations) - Schema changes
+  - [supabase/](mdc:supabase) - Project configuration
+
+## Data Flow Architecture
+
+1. **User Interaction** → Frontend (Next.js)
+2. **API Requests** → Backend API (FastAPI) 
+3. **Agent Execution** → Sandbox Environment (Docker)
+4. **Tool Calls** → Various integrations (Browser, APIs, Files)
+5. **Data Persistence** → Supabase (PostgreSQL)
+6. **Real-time Updates** → Frontend via Supabase subscriptions
+
+## Agent Framework (AgentPress)
+
+- **Context Manager**: [agentpress/context_manager.py](mdc:backend/agentpress/context_manager.py)
+- **Response Processor**: [agentpress/response_processor.py](mdc:backend/agentpress/response_processor.py)
+- **Thread Manager**: [agentpress/thread_manager.py](mdc:backend/agentpress/thread_manager.py)
+- **Tool Registry**: [agentpress/tool_registry.py](mdc:backend/agentpress/tool_registry.py)
+
+## Model Context Protocol (MCP)
+
+- **Local Integration**: [backend/mcp_local/](mdc:backend/mcp_local)
+- **API Server**: [mcp_local/api.py](mdc:backend/mcp_local/api.py)
+- **Client Implementation**: [mcp_local/client.py](mdc:backend/mcp_local/client.py)
+
+## Security Model
+
+- **Agent Isolation**: Each agent runs in isolated Docker containers
+- **Authentication**: Supabase Auth with JWT tokens
+- **Authorization**: Row Level Security (RLS) policies
+- **API Security**: Rate limiting and input validation
+- **Secret Management**: Environment-based configuration
+- **Network Security**: Controlled container networking
+
+## External Integrations
+
+- **LLM Providers**: Anthropic, OpenAI, Groq (via LiteLLM)
+- **Search Services**: Tavily, web search APIs
+- **Web Scraping**: Firecrawl, custom scrapers
+- **Cloud Storage**: Supabase Storage
+- **Email Services**: Email API integration
+- **Payment Processing**: Stripe integration via billing service
+- **Monitoring**: Sentry error tracking, Langfuse LLM observability

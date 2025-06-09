@@ -1,5 +1,836 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: false
 ---
+# Backend Conventions & Patterns
+
+## Backend File Structure
+```
+backend/
+├── api.py                      # Main FastAPI application entry
+├── .env.example                # Environment variables template
+├── requirements.txt            # Python dependencies
+├── pyproject.toml              # Poetry configuration
+├── Dockerfile                  # Container configuration
+├── run_agent_background.py     # Background agent processing
+├── agent/                      # Core agent system
+│   ├── api.py                  # Agent API endpoints
+│   ├── run.py                  # Agent execution engine
+│   ├── prompt.py               # System prompts and templates
+│   ├── agent_builder_prompt.py # Agent building prompts
+│   ├── gemini_prompt.py        # Gemini-specific prompting
+│   ├── tools/                  # Agent tool implementations
+│   │   ├── computer_use_tool.py       # Desktop automation
+│   │   ├── data_providers_tool.py     # External data sources
+│   │   ├── message_tool.py            # Message handling
+│   │   ├── sb_browser_tool.py         # Browser automation
+│   │   ├── sb_files_tool.py           # File operations
+│   │   ├── sb_shell_tool.py           # Shell command execution
+│   │   ├── web_search_tool.py         # Web search integration
+│   │   ├── expand_msg_tool.py         # Message expansion
+│   │   ├── mcp_tool_wrapper.py        # MCP tool wrapper
+│   │   └── data_providers/            # External API integrations
+│   │       ├── AmazonProvider.py      # Amazon services
+│   │       ├── FirecrawlProvider.py   # Web scraping
+│   │       ├── LinkedinProvider.py    # LinkedIn integration
+│   │       ├── TavilyProvider.py      # Search API
+│   │       └── RapidAPIProvider.py    # Multi-service API
+│   └── sample_responses/       # Example agent responses
+├── agentpress/                 # Agent framework core
+│   ├── context_manager.py      # Conversation context management
+│   ├── response_processor.py   # LLM response processing
+│   ├── thread_manager.py       # Thread lifecycle management
+│   ├── tool_registry.py        # Tool registration system
+│   └── utils/                  # Framework utilities
+├── mcp_local/                  # Model Context Protocol
+│   ├── api.py                  # MCP API server
+│   ├── client.py               # MCP client implementation
+│   └── tools/                  # MCP tool integrations
+├── sandbox/                    # Execution environment
+│   ├── api.py                  # Sandbox API server
+│   ├── sandbox.py              # Container management
+│   ├── tool_base.py            # Base tool class
+│   └── docker/                 # Docker configurations
+├── services/                   # Business logic services
+│   ├── billing.py              # Payment processing
+│   ├── email.py                # Email notifications
+│   ├── llm.py                  # LLM integrations
+│   ├── redis.py                # Caching service
+│   ├── supabase.py             # Database service
+│   ├── transcription.py        # Audio processing
+│   └── langfuse.py             # LLM observability
+├── supabase/                   # Database configurations
+│   └── migrations/             # Schema migrations
+└── utils/                      # Utilities and helpers
+    └── scripts/                # Maintenance scripts
+```
+
+## FastAPI Application Structure
+
+### Main Application Setup ([api.py](mdc:backend/api.py))
+```python
+from fastapi import FastAPI, HTTPException, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
+import uvicorn
+from contextlib import asynccontextmanager
+
+# Lifespan management for startup/shutdown
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    await initialize_services()
+    yield
+    # Shutdown
+    await cleanup_services()
+
+app = FastAPI(
+    title="Suna API",
+    description="AI Agent Platform API",
+    version="1.0.0",
+    lifespan=lifespan
+)
+
+# Middleware configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Configure for production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+# Include routers
+app.include_router(agent_router, prefix="/api/agents", tags=["agents"])
+app.include_router(threads_router, prefix="/api/threads", tags=["threads"])
+```
+
+### API Router Patterns
+```python
+# routers/agents.py
+from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List
+from pydantic import BaseModel
+from services.auth import get_current_user
+from services.agent import AgentService
+
+router = APIRouter()
+
+class AgentCreateRequest(BaseModel):
+    name: str
+    description: str
+    system_prompt: str
+    tools: List[str] = []
+
+class AgentResponse(BaseModel):
+    id: str
+    name: str
+    description: str
+    created_at: datetime
+    owner_id: str
+
+@router.post("/", response_model=AgentResponse)
+async def create_agent(
+    agent_data: AgentCreateRequest,
+    current_user = Depends(get_current_user),
+    agent_service = Depends(get_agent_service)
+):
+    """Create a new agent"""
+    try:
+        agent = await agent_service.create_agent(
+            user_id=current_user.id,
+            **agent_data.dict()
+        )
+        return AgentResponse(**agent)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+```
+
+## Service Layer Architecture
+
+### Service Base Class
+```python
+# services/base.py
+from abc import ABC, abstractmethod
+from typing import Optional, Dict, Any
+from supabase import Client
+
+class BaseService(ABC):
+    def __init__(self, supabase_client: Client):
+        self.supabase = supabase_client
+    
+    async def _execute_query(self, query_builder):
+        """Execute Supabase query with error handling"""
+        try:
+            result = query_builder.execute()
+            return result.data
+        except Exception as e:
+            logger.error(f"Database query failed: {e}")
+            raise
+    
+    async def _paginate_query(
+        self, 
+        query_builder, 
+        page: int = 1, 
+        per_page: int = 20
+    ):
+        """Add pagination to query"""
+        offset = (page - 1) * per_page
+        return query_builder.range(offset, offset + per_page - 1)
+```
+
+### Agent Service Implementation
+```python
+# services/agent.py
+from typing import List, Optional, Dict
+from .base import BaseService
+from .llm import LLMService
+from models.agent import Agent, AgentConfig
+
+class AgentService(BaseService):
+    def __init__(self, supabase_client: Client):
+        super().__init__(supabase_client)
+        self.llm_service = LLMService()
+    
+    async def create_agent(
+        self, 
+        user_id: str, 
+        name: str, 
+        description: str,
+        system_prompt: str,
+        tools: List[str] = None
+    ) -> Dict:
+        """Create a new agent configuration"""
+        
+        # Validate tools
+        if tools:
+            valid_tools = await self._validate_tools(tools)
+            if not valid_tools:
+                raise ValueError("Invalid tools specified")
+        
+        # Create agent record
+        agent_data = {
+            "name": name,
+            "description": description,
+            "system_prompt": system_prompt,
+            "tools": tools or [],
+            "user_id": user_id,
+            "config": {
+                "model": "claude-3-sonnet-20240229",
+                "temperature": 0.7,
+                "max_tokens": 4096
+            }
+        }
+        
+        result = await self._execute_query(
+            self.supabase.table("agents").insert(agent_data)
+        )
+        
+        return result[0]
+    
+    async def _validate_tools(self, tools: List[str]) -> bool:
+        """Validate that all specified tools exist"""
+        from agentpress.tool_registry import get_available_tools
+        available_tools = get_available_tools()
+        return all(tool in available_tools for tool in tools)
+```
+
+## Agent Tool Development
+
+### Base Tool Interface ([sandbox/tool_base.py](mdc:backend/sandbox/tool_base.py))
+```python
+from abc import ABC, abstractmethod
+from typing import Dict, Any, Optional, List
+from pydantic import BaseModel
+
+class ToolParameter(BaseModel):
+    name: str
+    type: str
+    description: str
+    required: bool = True
+    default: Any = None
+
+class ToolResult(BaseModel):
+    success: bool
+    result: Any = None
+    error: Optional[str] = None
+    metadata: Dict[str, Any] = {}
+
+class BaseTool(ABC):
+    """Base class for all agent tools"""
+    
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        """Tool name identifier"""
+        pass
+    
+    @property
+    @abstractmethod
+    def description(self) -> str:
+        """Tool description for LLM"""
+        pass
+    
+    @property
+    @abstractmethod
+    def parameters(self) -> List[ToolParameter]:
+        """Tool parameter definitions"""
+        pass
+    
+    @abstractmethod
+    async def execute(self, **kwargs) -> ToolResult:
+        """Execute the tool with given parameters"""
+        pass
+    
+    def validate_parameters(self, **kwargs) -> Dict[str, Any]:
+        """Validate and process input parameters"""
+        validated = {}
+        
+        for param in self.parameters:
+            value = kwargs.get(param.name, param.default)
+            
+            if param.required and value is None:
+                raise ValueError(f"Required parameter '{param.name}' missing")
+            
+            validated[param.name] = value
+        
+        return validated
+```
+
+### Example Tool Implementation
+```python
+# agent/tools/sb_files_tool.py
+import os
+import asyncio
+from pathlib import Path
+from typing import List
+from sandbox.tool_base import BaseTool, ToolParameter, ToolResult
+
+class FileOperationTool(BaseTool):
+    @property
+    def name(self) -> str:
+        return "file_operation"
+    
+    @property
+    def description(self) -> str:
+        return "Perform file operations like read, write, list, delete"
+    
+    @property
+    def parameters(self) -> List[ToolParameter]:
+        return [
+            ToolParameter(
+                name="operation",
+                type="string",
+                description="Operation to perform: read, write, list, delete, create_dir",
+                required=True
+            ),
+            ToolParameter(
+                name="path",
+                type="string", 
+                description="File or directory path",
+                required=True
+            ),
+            ToolParameter(
+                name="content",
+                type="string",
+                description="Content for write operation",
+                required=False
+            )
+        ]
+    
+    async def execute(self, **kwargs) -> ToolResult:
+        try:
+            validated = self.validate_parameters(**kwargs)
+            operation = validated["operation"]
+            path = Path(validated["path"])
+            
+            # Security: Ensure path is within allowed directory
+            if not self._is_safe_path(path):
+                return ToolResult(
+                    success=False,
+                    error="Path access denied"
+                )
+            
+            if operation == "read":
+                result = await self._read_file(path)
+            elif operation == "write":
+                result = await self._write_file(path, validated["content"])
+            elif operation == "list":
+                result = await self._list_directory(path)
+            elif operation == "delete":
+                result = await self._delete_path(path)
+            elif operation == "create_dir":
+                result = await self._create_directory(path)
+            else:
+                return ToolResult(
+                    success=False,
+                    error=f"Unknown operation: {operation}"
+                )
+            
+            return ToolResult(success=True, result=result)
+            
+        except Exception as e:
+            return ToolResult(
+                success=False,
+                error=f"File operation failed: {str(e)}"
+            )
+    
+    def _is_safe_path(self, path: Path) -> bool:
+        """Ensure path is within allowed sandbox directory"""
+        try:
+            allowed_root = Path("/workspace").resolve()
+            resolved_path = path.resolve()
+            return str(resolved_path).startswith(str(allowed_root))
+        except:
+            return False
+```
+
+## AgentPress Framework
+
+### Context Manager ([agentpress/context_manager.py](mdc:backend/agentpress/context_manager.py))
+```python
+from typing import List, Dict, Any, Optional
+from dataclasses import dataclass, field
+from datetime import datetime
+
+@dataclass
+class Message:
+    role: str  # 'user', 'assistant', 'system', 'tool'
+    content: str
+    timestamp: datetime = field(default_factory=datetime.now)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+@dataclass
+class ThreadContext:
+    thread_id: str
+    messages: List[Message] = field(default_factory=list)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    
+class ContextManager:
+    def __init__(self, max_context_length: int = 32000):
+        self.max_context_length = max_context_length
+        self.contexts: Dict[str, ThreadContext] = {}
+    
+    async def get_context(self, thread_id: str) -> ThreadContext:
+        """Get or create thread context"""
+        if thread_id not in self.contexts:
+            # Load from database
+            context = await self._load_context_from_db(thread_id)
+            self.contexts[thread_id] = context
+        
+        return self.contexts[thread_id]
+    
+    async def add_message(
+        self, 
+        thread_id: str, 
+        message: Message
+    ) -> None:
+        """Add message to thread context"""
+        context = await self.get_context(thread_id)
+        context.messages.append(message)
+        
+        # Trim context if too long
+        await self._trim_context_if_needed(context)
+        
+        # Persist to database
+        await self._save_message_to_db(thread_id, message)
+    
+    async def _trim_context_if_needed(self, context: ThreadContext):
+        """Trim old messages if context exceeds limit"""
+        total_length = sum(len(msg.content) for msg in context.messages)
+        
+        if total_length > self.max_context_length:
+            # Keep system messages and recent messages
+            system_messages = [m for m in context.messages if m.role == 'system']
+            other_messages = [m for m in context.messages if m.role != 'system']
+            
+            # Keep most recent messages that fit in context
+            trimmed_messages = system_messages
+            current_length = sum(len(m.content) for m in system_messages)
+            
+            for msg in reversed(other_messages):
+                if current_length + len(msg.content) <= self.max_context_length:
+                    trimmed_messages.append(msg)
+                    current_length += len(msg.content)
+                else:
+                    break
+            
+            context.messages = trimmed_messages
+```
+
+### Tool Registry ([agentpress/tool_registry.py](mdc:backend/agentpress/tool_registry.py))
+```python
+from typing import Dict, Type, List
+from sandbox.tool_base import BaseTool
+import importlib
+import inspect
+
+class ToolRegistry:
+    def __init__(self):
+        self._tools: Dict[str, Type[BaseTool]] = {}
+        self._load_tools()
+    
+    def _load_tools(self):
+        """Dynamically load all available tools"""
+        tool_modules = [
+            "agent.tools.sb_files_tool",
+            "agent.tools.sb_browser_tool", 
+            "agent.tools.sb_shell_tool",
+            "agent.tools.web_search_tool",
+            "agent.tools.computer_use_tool",
+            "agent.tools.data_providers_tool",
+        ]
+        
+        for module_name in tool_modules:
+            try:
+                module = importlib.import_module(module_name)
+                
+                # Find tool classes in module
+                for name, obj in inspect.getmembers(module):
+                    if (inspect.isclass(obj) and 
+                        issubclass(obj, BaseTool) and 
+                        obj != BaseTool):
+                        tool_instance = obj()
+                        self._tools[tool_instance.name] = obj
+                        
+            except ImportError as e:
+                logger.warning(f"Could not load tool module {module_name}: {e}")
+    
+    def get_tool(self, tool_name: str) -> Optional[BaseTool]:
+        """Get tool instance by name"""
+        tool_class = self._tools.get(tool_name)
+        return tool_class() if tool_class else None
+    
+    def get_available_tools(self) -> List[str]:
+        """Get list of available tool names"""
+        return list(self._tools.keys())
+    
+    def register_tool(self, tool_class: Type[BaseTool]):
+        """Register a new tool class"""
+        tool_instance = tool_class()
+        self._tools[tool_instance.name] = tool_class
+
+# Global registry instance
+tool_registry = ToolRegistry()
+
+def get_tool(tool_name: str) -> Optional[BaseTool]:
+    return tool_registry.get_tool(tool_name)
+
+def get_available_tools() -> List[str]:
+    return tool_registry.get_available_tools()
+```
+
+## LLM Integration
+
+### LLM Service ([services/llm.py](mdc:backend/services/llm.py))
+```python
+import litellm
+from typing import List, Dict, Any, Optional, AsyncGenerator
+from dataclasses import dataclass
+import json
+
+@dataclass
+class LLMConfig:
+    model: str = "claude-3-sonnet-20240229"
+    temperature: float = 0.7
+    max_tokens: int = 4096
+    top_p: float = 1.0
+    frequency_penalty: float = 0.0
+
+class LLMService:
+    def __init__(self, config: LLMConfig = None):
+        self.config = config or LLMConfig()
+        # Configure LiteLLM
+        litellm.set_verbose = False
+    
+    async def chat_completion(
+        self,
+        messages: List[Dict[str, str]],
+        tools: Optional[List[Dict]] = None,
+        stream: bool = False
+    ) -> Dict[str, Any]:
+        """Generate chat completion"""
+        
+        try:
+            kwargs = {
+                "model": self.config.model,
+                "messages": messages,
+                "temperature": self.config.temperature,
+                "max_tokens": self.config.max_tokens,
+                "stream": stream
+            }
+            
+            if tools:
+                kwargs["tools"] = tools
+                kwargs["tool_choice"] = "auto"
+            
+            if stream:
+                return await self._stream_completion(**kwargs)
+            else:
+                response = await litellm.acompletion(**kwargs)
+                return self._process_response(response)
+                
+        except Exception as e:
+            logger.error(f"LLM completion failed: {e}")
+            raise
+    
+    async def _stream_completion(self, **kwargs) -> AsyncGenerator[str, None]:
+        """Stream completion tokens"""
+        async for chunk in await litellm.acompletion(**kwargs):
+            if chunk.choices[0].delta.content:
+                yield chunk.choices[0].delta.content
+    
+    def _process_response(self, response) -> Dict[str, Any]:
+        """Process LLM response"""
+        choice = response.choices[0]
+        
+        result = {
+            "content": choice.message.content,
+            "role": choice.message.role,
+            "finish_reason": choice.finish_reason,
+            "usage": {
+                "prompt_tokens": response.usage.prompt_tokens,
+                "completion_tokens": response.usage.completion_tokens,
+                "total_tokens": response.usage.total_tokens
+            }
+        }
+        
+        # Handle tool calls
+        if choice.message.tool_calls:
+            result["tool_calls"] = [
+                {
+                    "id": tc.id,
+                    "type": tc.type,
+                    "function": {
+                        "name": tc.function.name,
+                        "arguments": tc.function.arguments
+                    }
+                }
+                for tc in choice.message.tool_calls
+            ]
+        
+        return result
+```
+
+## Background Processing
+
+### Agent Execution Queue ([run_agent_background.py](mdc:backend/run_agent_background.py))
+```python
+import asyncio
+import redis
+import json
+from typing import Dict, Any
+from services.agent import AgentService
+from services.llm import LLMService
+from agentpress.context_manager import ContextManager
+
+class AgentProcessor:
+    def __init__(self):
+        self.redis_client = redis.Redis(
+            host=settings.REDIS_HOST,
+            port=settings.REDIS_PORT,
+            decode_responses=True
+        )
+        self.agent_service = AgentService()
+        self.llm_service = LLMService()
+        self.context_manager = ContextManager()
+    
+    async def start(self):
+        """Start processing agent execution queue"""
+        logger.info("Starting agent processor...")
+        
+        while True:
+            try:
+                # Pop job from queue (blocking)
+                job_data = self.redis_client.blpop("agent_jobs", timeout=30)
+                
+                if job_data:
+                    _, job_json = job_data
+                    job = json.loads(job_json)
+                    await self._process_job(job)
+                    
+            except Exception as e:
+                logger.error(f"Error processing agent job: {e}")
+                await asyncio.sleep(1)
+    
+    async def _process_job(self, job: Dict[str, Any]):
+        """Process individual agent job"""
+        try:
+            thread_id = job["thread_id"]
+            user_message = job["message"]
+            agent_config = job["agent_config"]
+            
+            # Get thread context
+            context = await self.context_manager.get_context(thread_id)
+            
+            # Add user message to context
+            await self.context_manager.add_message(
+                thread_id, 
+                Message(role="user", content=user_message)
+            )
+            
+            # Get agent tools
+            tools = await self._prepare_tools(agent_config.get("tools", []))
+            
+            # Generate response
+            messages = [{"role": m.role, "content": m.content} 
+                       for m in context.messages]
+            
+            response = await self.llm_service.chat_completion(
+                messages=messages,
+                tools=tools
+            )
+            
+            # Handle tool calls if present
+            if "tool_calls" in response:
+                await self._execute_tools(thread_id, response["tool_calls"])
+            
+            # Add assistant response to context
+            await self.context_manager.add_message(
+                thread_id,
+                Message(role="assistant", content=response["content"])
+            )
+            
+            # Notify frontend via websocket
+            await self._notify_completion(thread_id, response)
+            
+        except Exception as e:
+            logger.error(f"Agent job processing failed: {e}")
+            await self._notify_error(job["thread_id"], str(e))
+
+if __name__ == "__main__":
+    processor = AgentProcessor()
+    asyncio.run(processor.start())
+```
+
+## Error Handling and Logging
+
+### Structured Logging Configuration
+```python
+# utils/logging.py
+import logging
+import sys
+from pythonjsonlogger import jsonlogger
+
+def setup_logging():
+    """Configure structured logging"""
+    
+    # Create formatter
+    formatter = jsonlogger.JsonFormatter(
+        '%(levelname)s %(name)s %(asctime)s %(pathname)s %(lineno)d %(message)s'
+    )
+    
+    # Create handler
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(formatter)
+    
+    # Configure root logger
+    root_logger = logging.getLogger()
+    root_logger.addHandler(handler)
+    root_logger.setLevel(logging.INFO)
+    
+    # Configure specific loggers
+    logging.getLogger("uvicorn").setLevel(logging.WARNING)
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+```
+
+### Custom Exception Classes
+```python
+# utils/exceptions.py
+class SunaException(Exception):
+    """Base exception for Suna application"""
+    pass
+
+class AgentExecutionError(SunaException):
+    """Agent execution failed"""
+    pass
+
+class ToolExecutionError(SunaException):
+    """Tool execution failed"""
+    pass
+
+class ValidationError(SunaException):
+    """Input validation failed"""
+    pass
+
+class AuthenticationError(SunaException):
+    """Authentication failed"""
+    pass
+```
+
+## Testing Patterns
+
+### Unit Test Example
+```python
+# tests/test_services/test_agent_service.py
+import pytest
+from unittest.mock import Mock, AsyncMock
+from services.agent import AgentService
+
+@pytest.fixture
+def mock_supabase():
+    return Mock()
+
+@pytest.fixture
+def agent_service(mock_supabase):
+    return AgentService(mock_supabase)
+
+@pytest.mark.asyncio
+async def test_create_agent_success(agent_service, mock_supabase):
+    # Arrange
+    mock_supabase.table.return_value.insert.return_value.execute.return_value.data = [
+        {"id": "test-id", "name": "Test Agent"}
+    ]
+    
+    # Act
+    result = await agent_service.create_agent(
+        user_id="user-123",
+        name="Test Agent", 
+        description="Test description",
+        system_prompt="You are a helpful assistant"
+    )
+    
+    # Assert
+    assert result["id"] == "test-id"
+    assert result["name"] == "Test Agent"
+    mock_supabase.table.assert_called_with("agents")
+
+@pytest.mark.asyncio
+async def test_create_agent_invalid_tools(agent_service):
+    # Test validation error for invalid tools
+    with pytest.raises(ValueError, match="Invalid tools specified"):
+        await agent_service.create_agent(
+            user_id="user-123",
+            name="Test Agent",
+            description="Test description", 
+            system_prompt="Test prompt",
+            tools=["invalid_tool"]
+        )
+```
+
+## Security Best Practices
+
+### Input Validation
+- Always validate user input using Pydantic models
+- Sanitize file paths to prevent directory traversal
+- Validate tool parameters before execution
+- Use parameterized queries for database operations
+
+### Authentication & Authorization
+- Implement JWT token validation for all protected endpoints
+- Use Row Level Security (RLS) in Supabase
+- Validate user permissions for resource access
+- Log authentication attempts and failures
+
+### Sandbox Security
+- Run agent tools in isolated Docker containers
+- Limit file system access to designated directories
+- Implement network restrictions for tool execution
+- Monitor and log all tool executions
+
+

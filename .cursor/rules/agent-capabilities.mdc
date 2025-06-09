@@ -1,5 +1,585 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: false
 ---
+# Agent Capabilities & Use Cases
+
+## Agent Tools Structure
+```
+backend/agent/tools/
+├── computer_use_tool.py          # Desktop automation and GUI interaction
+├── data_providers_tool.py        # External data source integration
+├── message_tool.py               # Message handling and communication
+├── sb_browser_tool.py            # Browser automation and web interaction
+├── sb_files_tool.py              # File system operations
+├── sb_shell_tool.py              # Shell command execution
+├── web_search_tool.py            # Web search and information retrieval
+├── expand_msg_tool.py            # Message expansion and enhancement
+├── mcp_tool_wrapper.py           # Model Context Protocol integration
+└── data_providers/               # External API integrations
+    ├── AmazonProvider.py         # Amazon Web Services integration
+    ├── FirecrawlProvider.py      # Web scraping and content extraction
+    ├── LinkedinProvider.py       # LinkedIn API integration
+    ├── TavilyProvider.py         # Advanced search capabilities
+    └── RapidAPIProvider.py       # Multi-service API hub
+```
+
+## Core Agent Capabilities
+
+### 1. Computer Use & Desktop Automation
+**Tool**: [computer_use_tool.py](mdc:backend/agent/tools/computer_use_tool.py)
+
+**Capabilities**:
+- Screenshot capture and analysis
+- Mouse cursor movement and clicking
+- Keyboard input simulation
+- Window management and application control
+- GUI element detection and interaction
+- Multi-monitor support
+
+**Use Cases**:
+```python
+# Screenshot and analysis
+await computer_tool.execute(action="screenshot")
+
+# Click specific coordinates
+await computer_tool.execute(
+    action="click", 
+    coordinate=[x, y]
+)
+
+# Type text input
+await computer_tool.execute(
+    action="type", 
+    text="Hello, World!"
+)
+
+# Key combinations
+await computer_tool.execute(
+    action="key", 
+    key="ctrl+c"
+)
+```
+
+**Real-world Applications**:
+- Automated software testing and QA
+- Legacy system integration
+- Desktop application automation
+- UI workflow automation
+- Screen-based data extraction
+- Virtual assistant for desktop tasks
+
+### 2. Browser Automation & Web Interaction
+**Tool**: [sb_browser_tool.py](mdc:backend/agent/tools/sb_browser_tool.py)
+
+**Capabilities**:
+- Web page navigation and loading
+- Element interaction (click, type, select)
+- Form filling and submission
+- JavaScript execution
+- Cookie and session management
+- Multi-tab browsing
+- Headless and headed browser modes
+- Mobile browser simulation
+
+**Use Cases**:
+```python
+# Navigate to webpage
+await browser_tool.execute(
+    action="goto", 
+    url="https://example.com"
+)
+
+# Click element by selector
+await browser_tool.execute(
+    action="click", 
+    selector="button.submit"
+)
+
+# Fill form fields
+await browser_tool.execute(
+    action="fill", 
+    selector="input[name='email']", 
+    text="user@example.com"
+)
+
+# Extract page content
+await browser_tool.execute(
+    action="get_text", 
+    selector="h1.title"
+)
+
+# Execute JavaScript
+await browser_tool.execute(
+    action="evaluate", 
+    script="document.title"
+)
+```
+
+**Real-world Applications**:
+- Web scraping and data collection
+- E-commerce automation (price monitoring, order placement)
+- Social media management
+- Form automation and data entry
+- Website testing and monitoring
+- Content management system automation
+- Lead generation and research
+
+### 3. File System Operations
+**Tool**: [sb_files_tool.py](mdc:backend/agent/tools/sb_files_tool.py)
+
+**Capabilities**:
+- File reading and writing
+- Directory creation and management
+- File search and filtering
+- Permission management
+- Bulk file operations
+- Archive creation and extraction
+- File metadata extraction
+
+**Use Cases**:
+```python
+# Read file content
+await files_tool.execute(
+    operation="read", 
+    path="/workspace/data.txt"
+)
+
+# Write content to file
+await files_tool.execute(
+    operation="write", 
+    path="/workspace/output.txt", 
+    content="Generated content"
+)
+
+# List directory contents
+await files_tool.execute(
+    operation="list", 
+    path="/workspace/projects"
+)
+
+# Create directory
+await files_tool.execute(
+    operation="create_dir", 
+    path="/workspace/new_project"
+)
+
+# Delete file or directory
+await files_tool.execute(
+    operation="delete", 
+    path="/workspace/temp.txt"
+)
+```
+
+**Real-world Applications**:
+- Document processing and analysis
+- Data backup and organization
+- Log file analysis and monitoring
+- Configuration file management
+- Code generation and file templating
+- Content management and publishing
+- Data migration and transformation
+
+### 4. Shell Command Execution
+**Tool**: [sb_shell_tool.py](mdc:backend/agent/tools/sb_shell_tool.py)
+
+**Capabilities**:
+- Command execution with output capture
+- Environment variable management
+- Process monitoring and control
+- Script execution (bash, python, etc.)
+- System information gathering
+- Package management operations
+- Service management
+
+**Use Cases**:
+```python
+# Execute system command
+await shell_tool.execute(
+    command="ls -la /workspace"
+)
+
+# Run with environment variables
+await shell_tool.execute(
+    command="echo $PATH", 
+    env={"CUSTOM_VAR": "value"}
+)
+
+# Execute Python script
+await shell_tool.execute(
+    command="python script.py", 
+    working_dir="/workspace"
+)
+
+# Install packages
+await shell_tool.execute(
+    command="pip install requests"
+)
+```
+
+**Real-world Applications**:
+- System administration and DevOps
+- Build automation and CI/CD
+- Database management and migrations
+- Service deployment and monitoring
+- Data processing pipelines
+- Backup and maintenance scripts
+- Performance monitoring and analysis
+
+### 5. Web Search & Information Retrieval
+**Tool**: [web_search_tool.py](mdc:backend/agent/tools/web_search_tool.py)
+
+**Capabilities**:
+- Multi-engine search (Google, Bing, DuckDuckGo)
+- Real-time information retrieval
+- News and trending topics
+- Academic and research search
+- Local business and location search
+- Image and video search
+- Search result filtering and ranking
+
+**Use Cases**:
+```python
+# General web search
+await search_tool.execute(
+    query="latest AI developments 2024", 
+    engine="google"
+)
+
+# News search
+await search_tool.execute(
+    query="technology news", 
+    search_type="news", 
+    time_filter="week"
+)
+
+# Academic search
+await search_tool.execute(
+    query="machine learning papers", 
+    search_type="scholar"
+)
+
+# Local search
+await search_tool.execute(
+    query="restaurants near me", 
+    location="San Francisco, CA"
+)
+```
+
+**Real-world Applications**:
+- Market research and competitive analysis
+- Academic research and literature review
+- News monitoring and trend analysis
+- Price comparison and product research
+- Event and contact information gathering
+- Real estate and location research
+- Technical troubleshooting and support
+
+### 6. Data Provider Integrations
+**Tool**: [data_providers_tool.py](mdc:backend/agent/tools/data_providers_tool.py)
+
+**Available Providers**:
+- **Amazon** ([AmazonProvider.py](mdc:backend/agent/tools/data_providers/AmazonProvider.py)): Product data, reviews, pricing
+- **Firecrawl** ([FirecrawlProvider.py](mdc:backend/agent/tools/data_providers/FirecrawlProvider.py)): Advanced web scraping
+- **LinkedIn** ([LinkedinProvider.py](mdc:backend/agent/tools/data_providers/LinkedinProvider.py)): Professional network data
+- **Tavily** ([TavilyProvider.py](mdc:backend/agent/tools/data_providers/TavilyProvider.py)): Search and research
+- **RapidAPI** ([RapidAPIProvider.py](mdc:backend/agent/tools/data_providers/RapidAPIProvider.py)): Multi-service API access
+
+**Use Cases**:
+```python
+# Amazon product search
+await data_provider_tool.execute(
+    provider="amazon", 
+    action="search_products", 
+    query="wireless headphones"
+)
+
+# LinkedIn profile lookup
+await data_provider_tool.execute(
+    provider="linkedin", 
+    action="get_profile", 
+    profile_id="john-doe"
+)
+
+# Web content extraction
+await data_provider_tool.execute(
+    provider="firecrawl", 
+    action="scrape_page", 
+    url="https://example.com"
+)
+
+# Advanced search research
+await data_provider_tool.execute(
+    provider="tavily", 
+    action="research", 
+    topic="AI trends 2024"
+)
+```
+
+**Real-world Applications**:
+- E-commerce price monitoring and comparison
+- Lead generation and contact discovery
+- Content curation and research
+- Social media monitoring and analysis
+- Business intelligence and market research
+- Competitive analysis and benchmarking
+
+## Agent Framework Integration
+
+### AgentPress System
+**Core Components**:
+- **Context Manager** ([agentpress/context_manager.py](mdc:backend/agentpress/context_manager.py)): Conversation memory and context
+- **Response Processor** ([agentpress/response_processor.py](mdc:backend/agentpress/response_processor.py)): LLM output handling
+- **Thread Manager** ([agentpress/thread_manager.py](mdc:backend/agentpress/thread_manager.py)): Conversation lifecycle
+- **Tool Registry** ([agentpress/tool_registry.py](mdc:backend/agentpress/tool_registry.py)): Tool discovery and execution
+
+### Tool Execution Flow
+```python
+# 1. User sends message
+user_message = "Please search for Python tutorials"
+
+# 2. Agent processes request and determines tools needed
+tools_needed = ["web_search_tool"]
+
+# 3. Tool execution with parameters
+search_result = await web_search_tool.execute(
+    query="Python programming tutorials",
+    search_type="general",
+    max_results=5
+)
+
+# 4. Agent processes results and generates response
+response = await llm_service.generate_response(
+    context=conversation_context,
+    tool_results=[search_result]
+)
+
+# 5. Response sent to user with tool execution details
+```
+
+## Model Context Protocol (MCP) Integration
+
+### MCP Architecture
+**Components**:
+- **MCP Local Server** ([mcp_local/api.py](mdc:backend/mcp_local/api.py)): Local MCP server implementation
+- **MCP Client** ([mcp_local/client.py](mdc:backend/mcp_local/client.py)): Client for external MCP servers
+- **Tool Wrapper** ([mcp_tool_wrapper.py](mdc:backend/agent/tools/mcp_tool_wrapper.py)): Bridge between agent and MCP tools
+
+**Capabilities**:
+- External tool integration via MCP protocol
+- Standardized tool discovery and execution
+- Secure tool sandboxing and isolation
+- Cross-platform tool compatibility
+- Community tool ecosystem access
+
+**Use Cases**:
+```python
+# Connect to external MCP server
+await mcp_client.connect("ws://localhost:3000/mcp")
+
+# Discover available tools
+tools = await mcp_client.list_tools()
+
+# Execute MCP tool
+result = await mcp_tool_wrapper.execute(
+    tool_name="external_calculator",
+    parameters={"expression": "2 + 2"}
+)
+```
+
+## Advanced Agent Use Cases
+
+### 1. Business Process Automation
+**Scenario**: Automated invoice processing
+```python
+# Read invoice from email attachment
+invoice_data = await files_tool.read("invoice.pdf")
+
+# Extract data using OCR/document processing
+extracted_data = await data_provider_tool.execute(
+    provider="document_ai",
+    action="extract_invoice_data",
+    document=invoice_data
+)
+
+# Validate against database
+validation = await shell_tool.execute(
+    command="python validate_invoice.py",
+    input_data=extracted_data
+)
+
+# Update accounting system via web interface
+await browser_tool.execute(
+    action="goto",
+    url="https://accounting.company.com"
+)
+await browser_tool.execute(
+    action="fill_form",
+    data=extracted_data
+)
+```
+
+### 2. Research and Content Creation
+**Scenario**: Market research report generation
+```python
+# Gather market data
+market_data = await web_search_tool.execute(
+    query="AI market trends 2024",
+    search_type="news"
+)
+
+# Collect competitive analysis
+competitors = await data_provider_tool.execute(
+    provider="linkedin",
+    action="company_search",
+    industry="artificial intelligence"
+)
+
+# Analyze pricing data
+pricing_data = await browser_tool.execute(
+    action="scrape_pricing_pages",
+    urls=competitor_urls
+)
+
+# Generate report
+report = await files_tool.execute(
+    operation="write",
+    path="market_report.md",
+    content=generated_report
+)
+```
+
+### 3. System Administration
+**Scenario**: Automated server monitoring and maintenance
+```python
+# Check system status
+system_info = await shell_tool.execute(
+    command="df -h && free -m && top -n1"
+)
+
+# Monitor log files
+error_logs = await files_tool.execute(
+    operation="read",
+    path="/var/log/error.log"
+)
+
+# Check service status
+services = await shell_tool.execute(
+    command="systemctl status nginx postgresql redis"
+)
+
+# Send alerts if issues found
+if issues_detected:
+    await message_tool.execute(
+        action="send_alert",
+        message="System issues detected",
+        recipients=["admin@company.com"]
+    )
+```
+
+### 4. Data Migration and ETL
+**Scenario**: Database migration between systems
+```python
+# Extract data from source system
+source_data = await browser_tool.execute(
+    action="login_and_export",
+    url="https://oldsystem.com",
+    credentials=secure_credentials
+)
+
+# Transform data format
+transformed_data = await shell_tool.execute(
+    command="python transform_data.py",
+    input_file="source_data.csv"
+)
+
+# Validate data integrity
+validation_report = await shell_tool.execute(
+    command="python validate_migration.py",
+    data_file="transformed_data.csv"
+)
+
+# Load into destination system
+await browser_tool.execute(
+    action="bulk_upload",
+    url="https://newsystem.com",
+    data_file="transformed_data.csv"
+)
+```
+
+## Security and Safety Considerations
+
+### Tool Execution Security
+- **Sandboxed Execution**: All tools run in isolated Docker containers
+- **Path Validation**: File operations restricted to designated directories
+- **Command Filtering**: Shell commands validated against allowed patterns
+- **Resource Limits**: CPU, memory, and network usage constraints
+- **Audit Logging**: All tool executions logged for security monitoring
+
+### Data Privacy Protection
+- **Credential Management**: Secure storage and rotation of API keys
+- **Data Encryption**: Sensitive data encrypted at rest and in transit
+- **Access Control**: Role-based permissions for tool access
+- **Data Retention**: Automatic cleanup of temporary files and logs
+- **Compliance**: GDPR, CCPA, and industry-specific compliance features
+
+### Agent Behavior Guardrails
+- **Output Filtering**: Sensitive information redaction
+- **Action Validation**: Human approval required for destructive operations
+- **Rate Limiting**: Prevents excessive API usage and abuse
+- **Content Policies**: Blocks harmful or inappropriate content generation
+- **Monitoring**: Real-time detection of unusual agent behavior
+
+## Tool Development Guidelines
+
+### Creating Custom Tools
+```python
+# Custom tool template
+class CustomTool(BaseTool):
+    @property
+    def name(self) -> str:
+        return "custom_tool"
+    
+    @property
+    def description(self) -> str:
+        return "Description for LLM understanding"
+    
+    @property
+    def parameters(self) -> List[ToolParameter]:
+        return [
+            ToolParameter(
+                name="param1",
+                type="string",
+                description="Parameter description",
+                required=True
+            )
+        ]
+    
+    async def execute(self, **kwargs) -> ToolResult:
+        # Tool implementation
+        return ToolResult(
+            success=True,
+            result="Tool output"
+        )
+```
+
+### Tool Registry Registration
+```python
+# Register new tool
+from agentpress.tool_registry import tool_registry
+tool_registry.register_tool(CustomTool)
+
+# Tool becomes available to agents
+available_tools = get_available_tools()
+```
+
+### Best Practices
+- **Error Handling**: Comprehensive exception handling and user-friendly error messages
+- **Input Validation**: Validate all parameters before execution
+- **Documentation**: Clear descriptions and examples for LLM understanding
+- **Testing**: Unit tests and integration tests for reliability
+- **Performance**: Efficient implementation with proper resource management
+- **Security**: Input sanitization and output validation
+
+

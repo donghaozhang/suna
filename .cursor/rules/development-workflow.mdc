@@ -3,3 +3,321 @@ description:
 globs:
 alwaysApply: false
 ---
+# Development Workflow & Setup
+
+## Development File Structure
+```
+suna/
+├── setup.py                   # Automated project setup script
+├── start.py                   # Development environment starter
+├── mise.toml                  # Development environment config
+├── docker-compose.yaml        # Container orchestration
+├── backend/
+│   ├── .env.example           # Backend environment template
+│   ├── requirements.txt       # Python dependencies
+│   ├── pyproject.toml         # Poetry configuration
+│   ├── poetry.lock            # Locked dependencies
+│   ├── Dockerfile             # Backend container config
+│   └── run_agent_background.py # Background agent runner
+├── frontend/
+│   ├── .env.example           # Frontend environment template
+│   ├── package.json           # Node.js dependencies
+│   ├── package-lock.json      # Locked dependencies
+│   ├── next.config.ts         # Next.js configuration
+│   ├── tailwind.config.ts     # Tailwind CSS config
+│   ├── tsconfig.json          # TypeScript configuration
+│   ├── Dockerfile             # Frontend container config
+│   ├── .prettierrc            # Code formatting config
+│   └── .prettierignore        # Prettier ignore patterns
+└── supabase/
+    ├── config.toml            # Supabase project config
+    └── migrations/            # Database schema changes
+```
+
+## Quick Start Development
+
+### Automated Setup (Recommended)
+```bash
+# Clone repository
+git clone https://github.com/kortix-ai/suna.git
+cd suna
+
+# Run automated setup (handles all environment setup)
+python setup.py
+
+# Start development environment (starts all services)
+python start.py
+```
+
+### Manual Development Setup
+
+#### Prerequisites
+1. **Python 3.11+** - Backend runtime
+2. **Node.js 18+** - Frontend runtime  
+3. **Poetry** - Python dependency management
+4. **Supabase CLI** - Database management
+5. **Docker** - Container runtime (optional for local dev)
+
+#### Environment Configuration
+
+##### Backend Environment ([backend/.env](mdc:backend/.env))
+```env
+# Database
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# Redis (for caching and session management)
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_SSL=false
+
+# LLM Providers
+ANTHROPIC_API_KEY=your_anthropic_key
+OPENAI_API_KEY=your_openai_key
+
+# Search & Web Services (optional)
+TAVILY_API_KEY=your_tavily_key
+FIRECRAWL_API_KEY=your_firecrawl_key
+RAPID_API_KEY=your_rapidapi_key
+
+# Sandbox Environment
+SANDBOX_BASE_URL=http://localhost:8001
+SANDBOX_API_KEY=your_sandbox_key
+
+# Monitoring & Analytics
+SENTRY_DSN=your_sentry_dsn
+LANGFUSE_PUBLIC_KEY=your_langfuse_key
+LANGFUSE_SECRET_KEY=your_langfuse_secret
+```
+
+##### Frontend Environment ([frontend/.env.local](mdc:frontend/.env.local))
+```env
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+
+# API
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8000/api
+NEXT_PUBLIC_URL=http://localhost:3000
+
+# Features
+NEXT_PUBLIC_ENABLE_MARKETPLACE=true
+NEXT_PUBLIC_ENABLE_AGENTS=true
+NEXT_PUBLIC_ENABLE_MCP=true
+
+# Analytics
+NEXT_PUBLIC_SENTRY_DSN=your_sentry_dsn
+```
+
+#### Development Commands
+
+##### Backend Development
+```bash
+cd backend
+
+# Install dependencies with Poetry
+poetry install
+
+# Start main API server
+poetry run python api.py
+
+# Start sandbox API server
+poetry run python sandbox/api.py
+
+# Start MCP local server
+poetry run python mcp_local/api.py
+
+# Run background agent processor
+poetry run python run_agent_background.py
+
+# Apply database migrations
+supabase db push
+```
+
+##### Frontend Development
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Type checking
+npm run type-check
+
+# Code formatting
+npm run format
+```
+
+## Project Structure Conventions
+
+### Backend Organization
+- **[backend/api.py](mdc:backend/api.py)** - Main FastAPI application entry point
+- **[backend/agent/](mdc:backend/agent)** - Agent system components
+  - `api.py` - Agent API endpoints
+  - `run.py` - Agent execution logic
+  - `prompt.py` - System prompts and templates
+  - `tools/` - Tool implementations
+- **[backend/services/](mdc:backend/services)** - Business logic services
+- **[backend/agentpress/](mdc:backend/agentpress)** - Agent framework
+- **[backend/sandbox/](mdc:backend/sandbox)** - Execution environment
+- **[backend/mcp_local/](mdc:backend/mcp_local)** - Model Context Protocol integration
+
+### Frontend Organization
+- **[frontend/src/app/](mdc:frontend/src/app)** - Next.js App Router pages
+- **[frontend/src/components/](mdc:frontend/src/components)** - React components
+- **[frontend/src/hooks/](mdc:frontend/src/hooks)** - Custom React hooks
+- **[frontend/src/lib/](mdc:frontend/src/lib)** - Utilities and configurations
+- **[frontend/src/providers/](mdc:frontend/src/providers)** - Context providers
+- **[frontend/src/contexts/](mdc:frontend/src/contexts)** - React contexts
+
+## Development Tools & Scripts
+
+### Utility Scripts
+- **[setup.py](mdc:setup.py)** - Automated project setup and environment configuration
+- **[start.py](mdc:start.py)** - Development environment starter with service orchestration
+- **[backend/utils/scripts/](mdc:backend/utils/scripts)** - Maintenance and utility scripts
+
+### Container Development
+```bash
+# Start all services with Docker Compose
+docker-compose up
+
+# Start specific services
+docker-compose up backend frontend
+
+# Rebuild containers
+docker-compose build
+
+# View logs
+docker-compose logs -f backend
+docker-compose logs -f frontend
+
+# Stop all services
+docker-compose down
+```
+
+## Database Management
+
+### Supabase Setup and Operations
+```bash
+# Initialize Supabase in project
+supabase init
+
+# Link to remote project
+supabase link --project-ref your-project-ref
+
+# Apply migrations to local database
+supabase db reset
+
+# Apply migrations to remote database
+supabase db push
+
+# Generate TypeScript types
+supabase gen types typescript --local > types/supabase.ts
+```
+
+### Migration Workflow
+1. **Create Migration**: `supabase migration new migration_name`
+2. **Edit SQL**: Add changes in [backend/supabase/migrations/](mdc:backend/supabase/migrations)
+3. **Test Locally**: `supabase db reset`
+4. **Deploy**: `supabase db push`
+
+## Agent Development
+
+### Agent Tool Development
+```bash
+# Create new tool
+touch backend/agent/tools/my_new_tool.py
+
+# Register tool in registry
+# Edit backend/agentpress/tool_registry.py
+
+# Test tool in sandbox
+poetry run python -m pytest tests/test_tools.py
+```
+
+### MCP Integration
+```bash
+# Start MCP local server
+cd backend
+poetry run python mcp_local/api.py
+
+# Test MCP client connection
+poetry run python test_mcp_use.py
+```
+
+## Code Quality & Standards
+
+### Python (Backend)
+- **Formatting**: Black code formatter
+- **Type Checking**: mypy for static type analysis
+- **Linting**: flake8 for code quality
+- **Testing**: pytest for unit and integration tests
+
+### TypeScript (Frontend)
+- **Formatting**: Prettier for consistent code style
+- **Type Checking**: TypeScript strict mode
+- **Linting**: ESLint for code quality
+- **Testing**: Jest for unit tests
+
+### Git Workflow
+- **Branch Naming**: `feature/description`, `fix/description`, `hotfix/description`
+- **Commit Messages**: Conventional commits format
+- **Pull Requests**: Required for main branch
+- **Code Review**: At least one approval required
+
+## Environment Management
+
+### Development Environments
+- **Local**: Use `.env` files (never commit these)
+- **Docker**: Environment variables in docker-compose.yaml
+- **Production**: Secure environment variable injection
+
+### Feature Flags
+- **Backend**: Use environment variables for feature toggles
+- **Frontend**: [flags.ts](mdc:frontend/src/flags.ts) for client-side feature management
+
+## Monitoring & Debugging
+
+### Error Tracking
+- **Sentry Integration**: [backend/sentry.py](mdc:backend/sentry.py) and [frontend/src/sentry.config.ts](mdc:frontend/src/sentry.config.ts)
+- **LLM Observability**: Langfuse integration in [backend/services/langfuse.py](mdc:backend/services/langfuse.py)
+
+### Performance Monitoring
+- **Backend**: FastAPI built-in metrics and logging
+- **Frontend**: Next.js built-in analytics and Core Web Vitals
+- **Database**: Supabase dashboard for query performance
+
+## Testing Strategy
+
+### Backend Testing
+```bash
+# Run all tests
+poetry run pytest
+
+# Run specific test file
+poetry run pytest tests/test_agents.py
+
+# Run with coverage
+poetry run pytest --cov=backend
+```
+
+### Frontend Testing
+```bash
+# Run unit tests
+npm run test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run end-to-end tests
+npm run test:e2e
+```

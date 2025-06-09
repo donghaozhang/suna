@@ -3,3 +3,681 @@ description:
 globs:
 alwaysApply: false
 ---
+# Frontend Conventions & Patterns
+
+## Frontend File Structure
+```
+frontend/
+├── src/
+│   ├── app/                      # Next.js App Router
+│   │   ├── (dashboard)/          # Route groups for dashboard
+│   │   │   ├── (personalAccount)/# Personal account routes
+│   │   │   │   └── settings/     # User settings pages
+│   │   │   │       ├── billing/  # Billing management
+│   │   │   │       └── teams/    # Team management
+│   │   │   ├── (teamAccount)/    # Team account routes  
+│   │   │   │   └── [accountSlug]/# Dynamic team routes
+│   │   │   │       └── settings/ # Team settings
+│   │   │   │           ├── billing/  # Team billing
+│   │   │   │           └── members/  # Team members
+│   │   │   ├── agents/           # Agent management
+│   │   │   │   ├── _components/  # Agent-specific components
+│   │   │   │   │   └── mcp/      # MCP integration components
+│   │   │   │   │       └── _loaders/ # Loading components
+│   │   │   │   ├── _data/        # Agent data fetching
+│   │   │   │   ├── _hooks/       # Agent-specific hooks
+│   │   │   │   ├── _types/       # Agent type definitions
+│   │   │   │   ├── _utils/       # Agent utilities
+│   │   │   │   ├── [threadId]/   # Individual thread pages
+│   │   │   │   └── new/          # New agent creation
+│   │   │   │       └── [agentId]/# Agent template routes
+│   │   │   ├── dashboard/        # Main dashboard
+│   │   │   │   └── _components/  # Dashboard components
+│   │   │   │       └── suggestions/ # AI suggestions
+│   │   │   ├── marketplace/      # Agent marketplace
+│   │   │   └── projects/         # Project management
+│   │   │       └── [projectId]/  # Individual projects
+│   │   │           └── thread/   # Project threads
+│   │   │               ├── _components/ # Thread components
+│   │   │               ├── _hooks/      # Thread hooks
+│   │   │               ├── _types/      # Thread types
+│   │   │               └── [threadId]/  # Individual threads
+│   │   ├── (home)/               # Public pages
+│   │   ├── auth/                 # Authentication pages
+│   │   │   ├── callback/         # OAuth callback
+│   │   │   └── reset-password/   # Password reset
+│   │   ├── invitation/           # Team invitations
+│   │   ├── legal/                # Legal pages
+│   │   ├── monitoring/           # App monitoring
+│   │   ├── share/                # Public sharing
+│   │   │   └── [threadId]/       # Shared threads
+│   │   └── api/                  # API routes
+│   │       └── share-page/       # Share page API
+│   │           └── og-image/     # Open Graph images
+│   ├── components/               # Shared components
+│   │   ├── basejump/             # Team management components
+│   │   ├── billing/              # Payment components
+│   │   ├── dashboard/            # Dashboard UI components
+│   │   ├── examples/             # Example/demo components
+│   │   ├── file-renderers/       # File display components
+│   │   ├── home/                 # Landing page components
+│   │   │   ├── sections/         # Page sections
+│   │   │   └── ui/               # Home-specific UI
+│   │   ├── maintenance/          # Maintenance mode
+│   │   ├── payment/              # Payment processing
+│   │   ├── sentry/               # Error tracking
+│   │   ├── sidebar/              # Navigation sidebar
+│   │   ├── thread/               # Chat/conversation UI
+│   │   │   ├── chat-input/       # Message input components
+│   │   │   ├── content/          # Message content display
+│   │   │   ├── preview-renderers/# Content preview components
+│   │   │   └── tool-views/       # Tool result displays
+│   │   │       ├── ask-tool/     # Question asking tool
+│   │   │       ├── command-tool/ # Command execution
+│   │   │       ├── data-provider-tool/ # Data integration
+│   │   │       ├── expose-port-tool/   # Port exposure
+│   │   │       ├── file-operation/     # File operations
+│   │   │       ├── mcp-tool/           # MCP tool integration
+│   │   │       ├── see-image-tool/     # Image viewing
+│   │   │       ├── shared/             # Shared tool components
+│   │   │       ├── str-replace/        # String replacement
+│   │   │       ├── web-scrape-tool/    # Web scraping
+│   │   │       ├── web-search-tool/    # Web search
+│   │   │       └── wrapper/            # Tool wrapper components
+│   │   └── ui/                   # Shared UI components (shadcn/ui)
+│   ├── contexts/                 # React contexts
+│   ├── hooks/                    # Custom React hooks
+│   │   └── react-query/          # React Query hooks
+│   │       ├── agents/           # Agent-related queries
+│   │       ├── dashboard/        # Dashboard queries
+│   │       ├── files/            # File management queries
+│   │       ├── marketplace/      # Marketplace queries
+│   │       ├── mcp/              # MCP queries
+│   │       ├── sidebar/          # Sidebar queries
+│   │       ├── subscriptions/    # Subscription queries
+│   │       ├── threads/          # Thread queries
+│   │       ├── transcription/    # Audio transcription queries
+│   │       └── usage/            # Usage tracking queries
+│   ├── lib/                      # Utilities and configurations
+│   │   ├── actions/              # Server actions
+│   │   ├── constants/            # App constants
+│   │   ├── supabase/             # Supabase client setup
+│   │   └── utils/                # Helper functions
+│   └── providers/                # Context providers
+├── public/                       # Static assets
+│   └── share-page/               # Assets for shared pages
+├── .env.example                  # Environment template
+├── next.config.ts                # Next.js configuration
+├── package.json                  # Dependencies and scripts
+├── tailwind.config.ts            # Tailwind CSS configuration
+├── tsconfig.json                 # TypeScript configuration
+├── .prettierrc                   # Code formatting rules
+└── components.json               # shadcn/ui configuration
+```
+
+## Next.js App Router Conventions
+
+### Route Organization
+- **Route Groups**: Use `(groupName)` for organizing routes without affecting URL structure
+- **Dynamic Routes**: Use `[param]` for dynamic segments
+- **Private Folders**: Use `_folder` for internal organization (not routed)
+
+### Page and Layout Structure
+```typescript
+// app/layout.tsx - Root layout
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en">
+      <body>
+        <Providers>
+          {children}
+        </Providers>
+      </body>
+    </html>
+  )
+}
+
+// app/(dashboard)/layout.tsx - Dashboard layout
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <div className="flex h-screen">
+      <Sidebar />
+      <main className="flex-1 overflow-auto">
+        {children}
+      </main>
+    </div>
+  )
+}
+```
+
+### Server Components vs Client Components
+```typescript
+// Server Component (default) - for data fetching
+import { createServerClient } from '@/lib/supabase/server'
+
+export default async function ThreadsPage() {
+  const supabase = createServerClient()
+  const { data: threads } = await supabase
+    .from('threads')
+    .select('*')
+  
+  return <ThreadsList threads={threads} />
+}
+
+// Client Component - for interactivity
+'use client'
+
+import { useState } from 'react'
+
+export default function InteractiveComponent() {
+  const [state, setState] = useState('')
+  // ... interactive logic
+}
+```
+
+## React Component Patterns
+
+### Component Naming Conventions
+- **PascalCase** for components: `ThreadList`, `ChatInput`
+- **camelCase** for functions and variables: `handleSubmit`, `threadData`
+- **kebab-case** for file names: `thread-list.tsx`, `chat-input.tsx`
+
+### Component Structure Template
+```typescript
+// components/thread/thread-item.tsx
+'use client'
+
+import { useState } from 'react'
+import { cn } from '@/lib/utils'
+
+interface ThreadItemProps {
+  thread: Thread
+  isActive?: boolean
+  onSelect?: (threadId: string) => void
+  className?: string
+}
+
+export function ThreadItem({ 
+  thread, 
+  isActive = false, 
+  onSelect,
+  className 
+}: ThreadItemProps) {
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleClick = () => {
+    if (onSelect) {
+      onSelect(thread.id)
+    }
+  }
+
+  return (
+    <div 
+      className={cn(
+        "p-4 border rounded-lg cursor-pointer",
+        isActive && "bg-primary/10 border-primary",
+        isLoading && "opacity-50",
+        className
+      )}
+      onClick={handleClick}
+    >
+      <h3 className="font-medium">{thread.title}</h3>
+      <p className="text-sm text-muted-foreground">
+        {thread.lastMessage}
+      </p>
+    </div>
+  )
+}
+```
+
+### Custom Hook Patterns
+```typescript
+// hooks/react-query/threads/use-threads.ts
+import { useQuery } from '@tanstack/react-query'
+import { createClient } from '@/lib/supabase/client'
+
+export function useThreads(accountId: string) {
+  return useQuery({
+    queryKey: ['threads', accountId],
+    queryFn: async () => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('threads')
+        .select('*')
+        .eq('account_id', accountId)
+        .order('updated_at', { ascending: false })
+      
+      if (error) throw error
+      return data
+    },
+    enabled: !!accountId,
+  })
+}
+
+// hooks/use-local-storage.ts
+import { useState, useEffect } from 'react'
+
+export function useLocalStorage<T>(
+  key: string, 
+  initialValue: T
+): [T, (value: T) => void] {
+  const [storedValue, setStoredValue] = useState<T>(initialValue)
+
+  useEffect(() => {
+    try {
+      const item = window.localStorage.getItem(key)
+      if (item) {
+        setStoredValue(JSON.parse(item))
+      }
+    } catch (error) {
+      console.warn(`Error reading localStorage key "${key}":`, error)
+    }
+  }, [key])
+
+  const setValue = (value: T) => {
+    try {
+      setStoredValue(value)
+      window.localStorage.setItem(key, JSON.stringify(value))
+    } catch (error) {
+      console.warn(`Error setting localStorage key "${key}":`, error)
+    }
+  }
+
+  return [storedValue, setValue]
+}
+```
+
+## State Management
+
+### React Query for Server State
+```typescript
+// providers/react-query-provider.tsx
+'use client'
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+})
+
+export function ReactQueryProvider({ 
+  children 
+}: { 
+  children: React.ReactNode 
+}) {
+  return (
+    <QueryClientProvider client={queryClient}>
+      {children}
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
+  )
+}
+```
+
+### Context for Client State
+```typescript
+// contexts/thread-context.tsx
+'use client'
+
+import { createContext, useContext, useState } from 'react'
+
+interface ThreadContextType {
+  activeThreadId: string | null
+  setActiveThreadId: (id: string | null) => void
+  isStreaming: boolean
+  setIsStreaming: (streaming: boolean) => void
+}
+
+const ThreadContext = createContext<ThreadContextType | undefined>(undefined)
+
+export function ThreadProvider({ children }: { children: React.ReactNode }) {
+  const [activeThreadId, setActiveThreadId] = useState<string | null>(null)
+  const [isStreaming, setIsStreaming] = useState(false)
+
+  return (
+    <ThreadContext.Provider value={{
+      activeThreadId,
+      setActiveThreadId,
+      isStreaming,
+      setIsStreaming,
+    }}>
+      {children}
+    </ThreadContext.Provider>
+  )
+}
+
+export function useThread() {
+  const context = useContext(ThreadContext)
+  if (!context) {
+    throw new Error('useThread must be used within ThreadProvider')
+  }
+  return context
+}
+```
+
+## Styling with Tailwind CSS
+
+### Design System Constants
+```typescript
+// lib/constants/design.ts
+export const DESIGN_TOKENS = {
+  spacing: {
+    xs: '0.5rem',
+    sm: '1rem', 
+    md: '1.5rem',
+    lg: '2rem',
+    xl: '3rem',
+  },
+  borderRadius: {
+    sm: '0.375rem',
+    md: '0.5rem',
+    lg: '0.75rem',
+  },
+  animation: {
+    fast: '150ms',
+    normal: '200ms',
+    slow: '300ms',
+  },
+} as const
+```
+
+### Component Styling Patterns
+```typescript
+// Consistent class organization
+<div className={cn(
+  // Layout
+  "flex items-center justify-between",
+  // Spacing
+  "p-4 gap-3",
+  // Appearance
+  "bg-background border rounded-lg",
+  // States
+  "hover:bg-accent focus:ring-2 focus:ring-ring",
+  // Responsive
+  "sm:p-6 md:gap-4",
+  // Conditional classes
+  isActive && "bg-primary/10 border-primary",
+  // Custom className prop
+  className
+)}
+```
+
+### Responsive Design Patterns
+```typescript
+// Mobile-first responsive design
+<div className={cn(
+  // Mobile (default)
+  "flex flex-col gap-2 p-4",
+  // Tablet and up
+  "sm:flex-row sm:gap-4 sm:p-6",
+  // Desktop and up  
+  "lg:gap-6 lg:p-8",
+  // Large desktop
+  "xl:gap-8"
+)}>
+```
+
+## UI Component Library (shadcn/ui)
+
+### Component Usage Patterns
+```typescript
+// Use shadcn/ui components consistently
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+
+// Extend components when needed
+interface CustomButtonProps extends ButtonProps {
+  icon?: React.ReactNode
+  loading?: boolean
+}
+
+export function CustomButton({ 
+  icon, 
+  loading, 
+  children, 
+  disabled,
+  ...props 
+}: CustomButtonProps) {
+  return (
+    <Button 
+      disabled={disabled || loading}
+      {...props}
+    >
+      {loading ? <Spinner /> : icon}
+      {children}
+    </Button>
+  )
+}
+```
+
+## Real-time Features
+
+### Supabase Real-time Integration
+```typescript
+// hooks/use-realtime-thread.ts
+import { useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { createClient } from '@/lib/supabase/client'
+
+export function useRealtimeThread(threadId: string) {
+  const queryClient = useQueryClient()
+  const supabase = createClient()
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`thread-${threadId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `thread_id=eq.${threadId}`
+        },
+        (payload) => {
+          queryClient.setQueryData(
+            ['messages', threadId],
+            (old: any[]) => [...(old || []), payload.new]
+          )
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [threadId, queryClient, supabase])
+}
+```
+
+## Error Handling
+
+### Error Boundary Pattern
+```typescript
+// components/error-boundary.tsx
+'use client'
+
+import { ErrorBoundary as ReactErrorBoundary } from 'react-error-boundary'
+
+function ErrorFallback({ error, resetErrorBoundary }: any) {
+  return (
+    <div className="p-6 text-center">
+      <h2 className="text-lg font-semibold">Something went wrong</h2>
+      <pre className="mt-2 text-sm text-red-600">{error.message}</pre>
+      <Button onClick={resetErrorBoundary} className="mt-4">
+        Try again
+      </Button>
+    </div>
+  )
+}
+
+export function ErrorBoundary({ children }: { children: React.ReactNode }) {
+  return (
+    <ReactErrorBoundary FallbackComponent={ErrorFallback}>
+      {children}
+    </ReactErrorBoundary>
+  )
+}
+```
+
+### API Error Handling
+```typescript
+// lib/utils/api-error.ts
+export class APIError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+    public code?: string
+  ) {
+    super(message)
+    this.name = 'APIError'
+  }
+}
+
+// hooks/use-api-mutation.ts
+import { useMutation } from '@tanstack/react-query'
+import { toast } from 'sonner'
+
+export function useApiMutation<T, E = unknown>(
+  mutationFn: (variables: T) => Promise<any>,
+  options?: {
+    onSuccess?: (data: any) => void
+    successMessage?: string
+  }
+) {
+  return useMutation({
+    mutationFn,
+    onSuccess: (data) => {
+      if (options?.successMessage) {
+        toast.success(options.successMessage)
+      }
+      options?.onSuccess?.(data)
+    },
+    onError: (error: any) => {
+      const message = error instanceof APIError 
+        ? error.message 
+        : 'An unexpected error occurred'
+      toast.error(message)
+    },
+  })
+}
+```
+
+## Performance Optimization
+
+### Code Splitting and Lazy Loading
+```typescript
+// Lazy load heavy components
+import { lazy, Suspense } from 'react'
+
+const CodeEditor = lazy(() => import('@/components/code-editor'))
+
+function EditorPage() {
+  return (
+    <Suspense fallback={<div>Loading editor...</div>}>
+      <CodeEditor />
+    </Suspense>
+  )
+}
+```
+
+### Memoization Patterns
+```typescript
+// Memo for expensive renders
+import { memo } from 'react'
+
+export const ThreadItem = memo(function ThreadItem({ thread }: Props) {
+  // Component implementation
+})
+
+// useMemo for expensive calculations
+import { useMemo } from 'react'
+
+function ThreadStats({ messages }: Props) {
+  const stats = useMemo(() => {
+    return calculateStats(messages) // Expensive calculation
+  }, [messages])
+
+  return <div>{stats.total} messages</div>
+}
+```
+
+## Accessibility
+
+### ARIA and Semantic HTML
+```typescript
+// Proper semantic structure
+<main>
+  <h1>Dashboard</h1>
+  <nav aria-label="Main navigation">
+    <ul>
+      <li><a href="/threads">Threads</a></li>
+      <li><a href="/agents">Agents</a></li>
+    </ul>
+  </nav>
+  
+  <section aria-labelledby="recent-threads">
+    <h2 id="recent-threads">Recent Threads</h2>
+    {/* Thread list */}
+  </section>
+</main>
+
+// Interactive elements
+<button
+  aria-label="Delete thread"
+  aria-describedby="delete-warning"
+  onClick={handleDelete}
+>
+  <TrashIcon />
+</button>
+<div id="delete-warning" className="sr-only">
+  This action cannot be undone
+</div>
+```
+
+## Testing Patterns
+
+### Component Testing with Jest and Testing Library
+```typescript
+// __tests__/components/thread-item.test.tsx
+import { render, screen, fireEvent } from '@testing-library/react'
+import { ThreadItem } from '@/components/thread/thread-item'
+
+const mockThread = {
+  id: '1',
+  title: 'Test Thread',
+  lastMessage: 'Hello world',
+}
+
+describe('ThreadItem', () => {
+  it('renders thread information', () => {
+    render(<ThreadItem thread={mockThread} />)
+    
+    expect(screen.getByText('Test Thread')).toBeInTheDocument()
+    expect(screen.getByText('Hello world')).toBeInTheDocument()
+  })
+
+  it('calls onSelect when clicked', () => {
+    const onSelect = jest.fn()
+    render(<ThreadItem thread={mockThread} onSelect={onSelect} />)
+    
+    fireEvent.click(screen.getByText('Test Thread'))
+    expect(onSelect).toHaveBeenCalledWith('1')
+  })
+})
+```

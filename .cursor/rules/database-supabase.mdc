@@ -1,0 +1,410 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Database & Supabase Guidelines
+
+## Database Structure
+```
+backend/supabase/migrations/
+├── 20250523133848_admin-view-access.sql     # Admin permissions
+├── 20250524062639_agents_table.sql          # Agent management tables
+├── 20250529125628_agent_marketplace.sql     # Marketplace functionality
+├── 20250601000000_add_thread_metadata.sql   # Thread metadata support
+└── 20250602000000_add_custom_mcps_column.sql # MCP configuration
+
+supabase/
+├── config.toml                              # Project configuration
+└── [remote project files]                   # Remote Supabase setup
+```
+
+## Core Database Tables
+
+### Authentication & Users
+- **auth.users** - Supabase built-in user authentication
+- **accounts** - Extended user profiles and team accounts
+- **account_user** - User-account membership relationships
+- **invitations** - Team invitation management
+
+### Thread & Conversation Management
+- **threads** - Main conversation threads
+- **messages** - Individual messages within threads
+- **thread_metadata** - Extended thread information and settings
+- **projects** - Project organization for threads
+
+### Agent System
+- **agents** - Custom agent configurations
+- **agent_marketplace** - Public agent directory
+- **custom_mcps** - Model Context Protocol configurations
+- **tool_configurations** - Agent tool settings
+
+### Billing & Usage
+- **subscriptions** - User subscription management
+- **usage_tracking** - API and resource usage metrics
+- **billing_events** - Payment and billing history
+
+## Supabase Configuration
+
+### Environment Setup
+```bash
+# Install Supabase CLI
+npm install -g supabase
+
+# Initialize in project (if not already done)
+supabase init
+
+# Link to remote project
+supabase link --project-ref YOUR_PROJECT_REF
+
+# Login to Supabase
+supabase login
+```
+
+### Local Development Database
+```bash
+# Start local Supabase stack
+supabase start
+
+# Stop local stack
+supabase stop
+
+# Reset local database
+supabase db reset
+
+# View local dashboard
+# Navigate to http://localhost:54323
+```
+
+## Migration Management
+
+### Creating Migrations
+```bash
+# Create new migration
+supabase migration new migration_name
+
+# Example: Adding new table
+supabase migration new add_user_preferences_table
+```
+
+### Migration Best Practices
+```sql
+-- Always include rollback instructions
+-- Example migration file structure
+
+-- Create table with proper RLS
+CREATE TABLE user_preferences (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    preferences JSONB DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable Row Level Security
+ALTER TABLE user_preferences ENABLE ROW LEVEL SECURITY;
+
+-- Create RLS policies
+CREATE POLICY "Users can view their own preferences" ON user_preferences
+    FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own preferences" ON user_preferences
+    FOR UPDATE USING (auth.uid() = user_id);
+
+-- Create indexes for performance
+CREATE INDEX idx_user_preferences_user_id ON user_preferences(user_id);
+
+-- Add updated_at trigger
+CREATE TRIGGER update_user_preferences_updated_at
+    BEFORE UPDATE ON user_preferences
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+```
+
+### Applying Migrations
+```bash
+# Apply to local database
+supabase db reset
+
+# Apply to remote database (staging)
+supabase db push --linked
+
+# Apply to specific environment
+supabase db push --project-ref staging-project-ref
+```
+
+## Row Level Security (RLS)
+
+### RLS Policy Patterns
+```sql
+-- User-specific data access
+CREATE POLICY "policy_name" ON table_name
+    FOR operation USING (auth.uid() = user_id);
+
+-- Team-based access with account relationships
+CREATE POLICY "team_access" ON table_name
+    FOR ALL USING (
+        EXISTS (
+            SELECT 1 FROM account_user au
+            WHERE au.user_id = auth.uid()
+            AND au.account_id = table_name.account_id
+        )
+    );
+
+-- Public read with private write
+CREATE POLICY "public_read" ON table_name
+    FOR SELECT USING (is_public = true OR auth.uid() = user_id);
+
+CREATE POLICY "owner_write" ON table_name
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+```
+
+### Testing RLS Policies
+```sql
+-- Test as specific user
+SELECT auth.uid(); -- Should return user UUID
+SELECT * FROM protected_table; -- Should only show user's data
+
+-- Test policy effectiveness
+SET ROLE anon;
+SELECT * FROM protected_table; -- Should return empty or error
+
+-- Reset to authenticated user
+SET ROLE authenticated;
+```
+
+## Database Services Integration
+
+### Supabase Client Configuration
+```python
+# backend/services/supabase.py
+from supabase import create_client, Client
+from backend.utils.config import settings
+
+def get_supabase_admin_client() -> Client:
+    """Get Supabase client with admin privileges"""
+    return create_client(
+        supabase_url=settings.SUPABASE_URL,
+        supabase_key=settings.SUPABASE_SERVICE_ROLE_KEY
+    )
+
+def get_supabase_client(token: str = None) -> Client:
+    """Get Supabase client for user operations"""
+    client = create_client(
+        supabase_url=settings.SUPABASE_URL,
+        supabase_key=settings.SUPABASE_ANON_KEY
+    )
+    
+    if token:
+        client.auth.set_session(token)
+    
+    return client
+```
+
+### Frontend Client Setup
+```typescript
+// frontend/src/lib/supabase/client.ts
+import { createBrowserClient } from '@supabase/ssr'
+
+export function createClient() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}
+
+// frontend/src/lib/supabase/server.ts
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+
+export function createServerClient() {
+  const cookieStore = cookies()
+
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value
+        },
+      },
+    }
+  )
+}
+```
+
+## Real-time Subscriptions
+
+### Backend Real-time Setup
+```python
+# Listen to database changes
+def setup_realtime_listeners():
+    supabase = get_supabase_admin_client()
+    
+    # Listen to thread updates
+    def handle_thread_update(payload):
+        thread_id = payload['new']['id']
+        # Handle thread update
+        notify_frontend_clients(thread_id, payload)
+    
+    supabase.table('threads').on('UPDATE', handle_thread_update).subscribe()
+```
+
+### Frontend Real-time Integration
+```typescript
+// Real-time thread updates
+const supabase = createClient()
+
+useEffect(() => {
+  const channel = supabase
+    .channel('thread-updates')
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'threads',
+        filter: `user_id=eq.${user.id}`
+      },
+      (payload) => {
+        // Update local state
+        setThreads(prev => prev.map(thread => 
+          thread.id === payload.new.id ? { ...thread, ...payload.new } : thread
+        ))
+      }
+    )
+    .subscribe()
+
+  return () => {
+    supabase.removeChannel(channel)
+  }
+}, [user.id])
+```
+
+## Data Access Patterns
+
+### Repository Pattern for Backend
+```python
+# backend/repositories/thread_repository.py
+class ThreadRepository:
+    def __init__(self, supabase_client: Client):
+        self.supabase = supabase_client
+    
+    async def get_user_threads(self, user_id: str) -> List[Dict]:
+        result = self.supabase.table('threads') \
+            .select('*') \
+            .eq('user_id', user_id) \
+            .order('updated_at', desc=True) \
+            .execute()
+        
+        return result.data
+    
+    async def create_thread(self, thread_data: Dict) -> Dict:
+        result = self.supabase.table('threads') \
+            .insert(thread_data) \
+            .execute()
+        
+        return result.data[0]
+```
+
+### React Query Integration for Frontend
+```typescript
+// frontend/src/hooks/react-query/threads/use-threads.ts
+export function useThreads(accountId: string) {
+  return useQuery({
+    queryKey: ['threads', accountId],
+    queryFn: async () => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('threads')
+        .select('*')
+        .eq('account_id', accountId)
+        .order('updated_at', { ascending: false })
+      
+      if (error) throw error
+      return data
+    }
+  })
+}
+```
+
+## Performance Optimization
+
+### Database Indexing
+```sql
+-- Index frequently queried columns
+CREATE INDEX idx_threads_user_id ON threads(user_id);
+CREATE INDEX idx_threads_updated_at ON threads(updated_at DESC);
+CREATE INDEX idx_messages_thread_id ON messages(thread_id);
+
+-- Composite indexes for complex queries
+CREATE INDEX idx_threads_user_updated ON threads(user_id, updated_at DESC);
+
+-- Partial indexes for filtered queries
+CREATE INDEX idx_active_threads ON threads(user_id) WHERE archived = false;
+```
+
+### Query Optimization
+```sql
+-- Use specific column selection instead of SELECT *
+SELECT id, title, updated_at FROM threads WHERE user_id = $1;
+
+-- Use LIMIT for pagination
+SELECT * FROM threads 
+WHERE user_id = $1 
+ORDER BY updated_at DESC 
+LIMIT 20 OFFSET $2;
+
+-- Use EXISTS for existence checks
+SELECT EXISTS(SELECT 1 FROM threads WHERE id = $1 AND user_id = $2);
+```
+
+## Backup and Recovery
+
+### Automated Backups
+```bash
+# Supabase provides automated backups
+# Access via Supabase Dashboard > Settings > Database > Backups
+
+# Manual backup for local development
+supabase db dump > backup.sql
+
+# Restore from backup
+supabase db reset
+psql -h localhost -p 54322 -U postgres -d postgres < backup.sql
+```
+
+### Data Export/Import
+```python
+# Export data for analytics
+def export_thread_analytics():
+    supabase = get_supabase_admin_client()
+    
+    # Export anonymized thread data
+    result = supabase.table('threads') \
+        .select('id, created_at, message_count, tool_usage') \
+        .execute()
+    
+    return result.data
+```
+
+## Security Best Practices
+
+### Connection Security
+- Always use SSL/TLS connections
+- Rotate service role keys regularly
+- Use environment variables for sensitive configuration
+- Enable audit logging for production
+
+### Data Protection
+- Implement proper RLS policies for all tables
+- Encrypt sensitive data at application level
+- Use Supabase Vault for secret management
+- Regular security audits and penetration testing
+
+### Access Control
+- Principle of least privilege for service accounts
+- Regular access reviews for team members
+- Multi-factor authentication for admin access
+- IP restrictions for production database access
