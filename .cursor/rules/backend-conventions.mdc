@@ -1,9 +1,36 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: false
 ---
 # Backend Development Conventions
+
+## Backend File Structure
+```
+backend/
+├── api.py                      # FastAPI application entry point
+├── .env                        # Environment variables
+├── requirements.txt            # Python dependencies
+├── agent/                      # Agent core system
+│   ├── tools/                  # Agent tool implementations
+│   │   └── data_providers/     # External API integrations
+│   │       ├── LinkedinProvider.py
+│   │       ├── TavilyProvider.py
+│   │       ├── FirecrawlProvider.py
+│   │       └── RapidAPIProvider.py
+│   ├── agent_core.py           # Main agent logic
+│   └── tool_manager.py         # Tool orchestration
+├── services/                   # Business logic layer
+│   ├── auth_service.py         # Authentication logic
+│   ├── thread_service.py       # Conversation management
+│   └── file_service.py         # File handling
+├── supabase/                   # Supabase configurations
+│   └── migrations/             # Database schema changes
+├── utils/                      # Utilities and helpers
+│   └── scripts/                # Development scripts
+├── logs/                       # Application logs
+└── sandbox/docker/             # Container configurations
+```
 
 ## FastAPI Application Structure
 
@@ -21,16 +48,16 @@ alwaysApply: false
 
 ## Agent Architecture
 
-### Agent Core ([backend/agent/](mdc:backend/agent/))
+### Agent Core ([backend/agent/](mdc:backend/agent))
 - **Agent Logic**: Core agent reasoning and execution
 - **Tool Integration**: Modular tool system for extensibility
 - **State Management**: Thread and conversation state handling
 - **Security**: Sandboxed execution environment integration
 
-### Tool System ([backend/agent/tools/](mdc:backend/agent/tools/))
+### Tool System ([backend/agent/tools/](mdc:backend/agent/tools))
 - **Modular Design**: Each tool as separate class/module
 - **Standardized Interface**: Consistent tool calling convention
-- **Data Providers**: [backend/agent/tools/data_providers/](mdc:backend/agent/tools/data_providers/)
+- **Data Providers**: [backend/agent/tools/data_providers/](mdc:backend/agent/tools/data_providers)
   - External API integrations (LinkedIn, Tavily, Firecrawl)
   - Standardized response formats
   - Error handling and rate limiting
@@ -47,7 +74,7 @@ class ToolName:
         return result
 ```
 
-## Service Layer ([backend/services/](mdc:backend/services/))
+## Service Layer ([backend/services/](mdc:backend/services))
 - **Business Logic**: Separate from API routes
 - **Data Access**: Database interaction patterns
 - **External Integrations**: Third-party service wrappers
@@ -61,7 +88,7 @@ class ToolName:
 - **Real-time**: WebSocket connections for live updates
 - **File Storage**: Supabase Storage for file handling
 
-### Migration Management ([backend/supabase/migrations/](mdc:backend/supabase/migrations/))
+### Migration Management ([backend/supabase/migrations/](mdc:backend/supabase/migrations))
 - Use Supabase CLI for schema changes
 - Version control all migrations
 - Test migrations in staging environment
@@ -111,3 +138,4 @@ class ToolName:
 - **Secrets Management**: Secure handling of API keys
 - **Feature Flags**: Toggle features based on environment
 - **Health Checks**: Implement service health endpoints
+

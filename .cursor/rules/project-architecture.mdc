@@ -1,9 +1,38 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: false
 ---
 # Suna Project Architecture
+
+## File Structure Overview
+```
+suna/
+├── backend/                    # Python/FastAPI backend
+│   ├── api.py                 # Main FastAPI application
+│   ├── agent/                 # Agent logic and tools
+│   │   └── tools/             # Agent tool implementations
+│   │       └── data_providers/ # External API integrations
+│   ├── services/              # Business logic services
+│   ├── supabase/              # Supabase configurations
+│   │   └── migrations/        # Database migrations
+│   └── utils/scripts/         # Utility scripts
+├── frontend/                   # Next.js/React frontend
+│   ├── src/
+│   │   ├── app/               # App Router pages and layouts
+│   │   ├── components/        # Reusable UI components
+│   │   ├── contexts/          # React context providers
+│   │   ├── hooks/             # Custom React hooks
+│   │   └── lib/               # Utilities and actions
+│   │       ├── actions/       # Server actions
+│   │       └── supabase/      # Supabase client configs
+│   └── public/                # Static assets
+├── supabase/                   # Supabase project files
+│   └── migrations/            # Database schema migrations
+├── docker-compose.yaml         # Local development containers
+├── docker-compose.ghcr.yaml    # Pre-built image containers
+└── README.md                   # Project documentation
+```
 
 ## Overview
 Suna is an open-source generalist AI agent platform with four main architectural components working together to provide secure AI assistance capabilities.
@@ -15,17 +44,17 @@ Suna is an open-source generalist AI agent platform with four main architectural
 - **Purpose**: REST endpoints, thread management, LLM integration
 - **Key Files**: 
   - [api.py](mdc:backend/api.py) - Main FastAPI application
-  - [agent/](mdc:backend/agent/) - Agent logic and tools
-  - [services/](mdc:backend/services/) - Business logic services
+  - [agent/](mdc:backend/agent) - Agent logic and tools
+  - [services/](mdc:backend/services) - Business logic services
 - **Integration**: Uses LiteLLM for multiple LLM providers (Anthropic, OpenAI)
 
 ### 2. Frontend (`frontend/`)
 - **Technology**: Next.js/React with TypeScript
 - **Purpose**: Responsive UI with chat interface and dashboard
 - **Key Directories**:
-  - [src/app/](mdc:frontend/src/app/) - App Router pages and layouts
-  - [src/components/](mdc:frontend/src/components/) - Reusable UI components
-  - [src/lib/](mdc:frontend/src/lib/) - Utilities and actions
+  - [src/app/](mdc:frontend/src/app) - App Router pages and layouts
+  - [src/components/](mdc:frontend/src/components) - Reusable UI components
+  - [src/lib/](mdc:frontend/src/lib) - Utilities and actions
 
 ### 3. Agent Docker
 - **Technology**: Isolated Docker containers via Daytona
@@ -36,7 +65,7 @@ Suna is an open-source generalist AI agent platform with four main architectural
 ### 4. Supabase Database (`supabase/`)
 - **Purpose**: Data persistence, authentication, real-time features
 - **Features**: User management, conversation history, file storage, analytics
-- **Migrations**: [supabase/migrations/](mdc:supabase/migrations/)
+- **Migrations**: [supabase/migrations/](mdc:supabase/migrations)
 
 ## Data Flow
 1. User interacts with Frontend (Next.js)
@@ -50,3 +79,5 @@ Suna is an open-source generalist AI agent platform with four main architectural
 - Supabase Row Level Security (RLS)
 - API key management for external services
 - Team-based access controls
+
+

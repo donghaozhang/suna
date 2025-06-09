@@ -5,9 +5,44 @@ alwaysApply: false
 ---
 # Frontend Development Conventions
 
+## Frontend File Structure
+```
+frontend/
+├── src/
+│   ├── app/                    # Next.js App Router
+│   │   ├── (dashboard)/        # Dashboard route group
+│   │   │   ├── (personalAccount)/settings/
+│   │   │   ├── (teamAccount)/[accountSlug]/
+│   │   │   ├── agents/[threadId]/
+│   │   │   └── dashboard/
+│   │   ├── (home)/             # Landing pages route group
+│   │   ├── auth/callback/      # Authentication callback
+│   │   └── share/[threadId]/   # Public sharing routes
+│   ├── components/             # React components
+│   │   ├── basejump/           # Auth & account management
+│   │   ├── billing/            # Payment components
+│   │   ├── file-renderers/     # File display components
+│   │   ├── home/               # Landing page components
+│   │   │   ├── sections/       # Page sections
+│   │   │   └── ui/             # Home-specific UI
+│   │   ├── sidebar/            # Navigation components
+│   │   ├── thread/             # Chat components
+│   │   │   └── tool-views/     # Agent tool displays
+│   │   └── ui/                 # Shared UI components
+│   ├── contexts/               # React contexts
+│   ├── hooks/                  # Custom React hooks
+│   └── lib/                    # Utilities and configurations
+│       ├── actions/            # Server actions
+│       ├── supabase/           # Supabase client setup
+│       └── utils/              # Helper functions
+├── public/                     # Static assets
+├── .env.local                  # Environment variables
+└── package.json                # Dependencies
+```
+
 ## Next.js App Router Structure
 
-### Route Organization ([frontend/src/app/](mdc:frontend/src/app/))
+### Route Organization ([frontend/src/app/](mdc:frontend/src/app))
 - **Route Groups**: Use parentheses for organization without affecting URL structure
   - `(dashboard)/` - Dashboard-related pages
   - `(home)/` - Landing/marketing pages
@@ -31,7 +66,7 @@ app/
 
 ## Component Organization
 
-### Component Categories ([frontend/src/components/](mdc:frontend/src/components/))
+### Component Categories ([frontend/src/components/](mdc:frontend/src/components))
 - **basejump/**: Authentication and account management components
 - **billing/**: Payment and subscription components  
 - **file-renderers/**: File display and preview components
@@ -50,7 +85,7 @@ app/
 
 ## State Management Patterns
 
-### React Context ([frontend/src/contexts/](mdc:frontend/src/contexts/))
+### React Context ([frontend/src/contexts/](mdc:frontend/src/contexts))
 - Use for app-wide state (auth, theme, user preferences)
 - Provide TypeScript interfaces for context values
 - Implement proper context providers with default values
@@ -75,7 +110,7 @@ app/
 
 ## Data Fetching Patterns
 
-### Supabase Integration ([frontend/src/lib/supabase/](mdc:frontend/src/lib/supabase/))
+### Supabase Integration ([frontend/src/lib/supabase/](mdc:frontend/src/lib/supabase))
 - Use server-side client for Server Components
 - Use client-side client for interactive components
 - Implement proper error handling and loading states

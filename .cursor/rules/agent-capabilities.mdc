@@ -5,6 +5,29 @@ alwaysApply: false
 ---
 # Agent Capabilities & Use Cases
 
+## Agent Tool File Structure
+```
+backend/agent/tools/
+├── data_providers/             # External API integrations
+│   ├── LinkedinProvider.py    # LinkedIn data access
+│   ├── TavilyProvider.py       # Enhanced search capabilities  
+│   ├── FirecrawlProvider.py    # Web content extraction
+│   └── RapidAPIProvider.py     # Multi-service API access
+├── browser_tools/              # Web automation tools
+│   ├── playwright_browser.py   # Browser automation
+│   └── screenshot_tool.py      # Screenshot capture
+├── file_tools/                 # File management tools
+│   ├── pdf_generator.py        # PDF creation
+│   ├── excel_handler.py        # Spreadsheet operations
+│   └── document_processor.py   # File processing
+├── search_tools/               # Information discovery
+│   ├── web_search.py           # Web search integration
+│   └── academic_search.py      # Scientific paper search
+└── communication_tools/        # External integrations
+    ├── email_handler.py        # Email automation
+    └── calendar_integration.py # Calendar management
+```
+
 ## Core Agent Capabilities
 
 ### Browser Automation
@@ -67,7 +90,7 @@ alwaysApply: false
 
 ## Agent Tool Categories
 
-### Data Providers ([backend/agent/tools/data_providers/](mdc:backend/agent/tools/data_providers/))
+### Data Providers ([backend/agent/tools/data_providers/](mdc:backend/agent/tools/data_providers))
 - **LinkedinProvider**: Professional network data
 - **TavilyProvider**: Enhanced search capabilities
 - **FirecrawlProvider**: Web content extraction
@@ -110,7 +133,7 @@ alwaysApply: false
 ## Development Guidelines
 
 ### Adding New Capabilities
-1. Implement tool in [backend/agent/tools/](mdc:backend/agent/tools/)
+1. Implement tool in [backend/agent/tools/](mdc:backend/agent/tools)
 2. Follow standardized tool interface
 3. Add comprehensive error handling
 4. Test in isolated environment

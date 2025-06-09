@@ -5,6 +5,29 @@ alwaysApply: false
 ---
 # Development Workflow & Setup
 
+## File Structure Reference
+```
+suna/
+├── backend/
+│   ├── .env                   # Backend environment variables
+│   ├── api.py                 # FastAPI application entry point
+│   ├── requirements.txt       # Python dependencies
+│   ├── agent/tools/           # Agent tool implementations
+│   ├── services/              # Business logic layer
+│   └── utils/scripts/         # Development utilities
+├── frontend/
+│   ├── .env.local             # Frontend environment variables
+│   ├── package.json           # Node.js dependencies
+│   ├── src/app/               # Next.js App Router pages
+│   ├── src/components/        # React components
+│   ├── src/hooks/             # Custom React hooks
+│   ├── src/contexts/          # React context providers
+│   └── src/lib/actions/       # Server actions
+├── supabase/migrations/       # Database schema changes
+├── docker-compose.yaml        # Local development setup
+└── docker-compose.ghcr.yaml   # Pre-built container setup
+```
+
 ## Environment Configuration
 
 ### Backend Environment ([backend/.env](mdc:backend/.env))
@@ -51,17 +74,17 @@ supabase db push
 
 ### Backend Structure
 - **API Routes**: Organized by feature in FastAPI
-- **Agent Tools**: [backend/agent/tools/](mdc:backend/agent/tools/)
-- **Data Providers**: [backend/agent/tools/data_providers/](mdc:backend/agent/tools/data_providers/)
+- **Agent Tools**: [backend/agent/tools/](mdc:backend/agent/tools) 
+- **Data Providers**: [backend/agent/tools/data_providers/](mdc:backend/agent/tools/data_providers)
 - **Services**: Business logic separation
-- **Utils & Scripts**: [backend/utils/scripts/](mdc:backend/utils/scripts/)
+- **Utils & Scripts**: [backend/utils/scripts/](mdc:backend/utils/scripts)
 
 ### Frontend Structure
-- **App Router**: [frontend/src/app/](mdc:frontend/src/app/) - Next.js 13+ routing
+- **App Router**: [frontend/src/app/](mdc:frontend/src/app) - Next.js 13+ routing
 - **Components**: Organized by feature/domain
-- **Hooks**: [frontend/src/hooks/](mdc:frontend/src/hooks/) - Custom React hooks
-- **Contexts**: [frontend/src/contexts/](mdc:frontend/src/contexts/) - React context providers
-- **Actions**: [frontend/src/lib/actions/](mdc:frontend/src/lib/actions/) - Server actions
+- **Hooks**: [frontend/src/hooks/](mdc:frontend/src/hooks) - Custom React hooks
+- **Contexts**: [frontend/src/contexts/](mdc:frontend/src/contexts) - React context providers
+- **Actions**: [frontend/src/lib/actions/](mdc:frontend/src/lib/actions) - Server actions
 
 ## Development Best Practices
 - Use TypeScript for type safety
