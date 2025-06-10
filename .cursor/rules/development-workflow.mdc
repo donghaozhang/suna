@@ -236,6 +236,11 @@ The application uses **Quriosity** branding with a three-logo system:
   - GitHub still points to code repository
 - **Sidebar CTA**: "Join Our Team" link points to https://quriosity.com.au/
 
+### Build Error Fixes
+- **HeroVideoSection Removed**: Deleted problematic `hero-video-section.tsx` that contained unauthorized thum.io image service
+- **Import Cleanup**: Removed all imports and usages of `HeroVideoSection` from `hero-section.tsx`
+- **Layout Optimization**: Reduced showcase section padding from `py-20` to `py-10` for better spacing
+
 ## Development Tools & Scripts
 
 ### Utility Scripts

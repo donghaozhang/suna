@@ -636,6 +636,7 @@ export function QuriositShowcase() {
 - **Featured highlighting**: Special styling for featured agents
 - **Responsive grid**: 1 column mobile, 2 tablet, 3 desktop
 - **Gradient title**: Blue-to-purple gradient for "Showcases"
+- **Optimized spacing**: Use `py-10` instead of `py-20` for tighter layout spacing
 
 ## Performance Optimization
 
@@ -708,6 +709,19 @@ function ThreadStats({ messages }: Props) {
   This action cannot be undone
 </div>
 ```
+
+## Troubleshooting & Fixes
+
+### Removed Components
+- **HeroVideoSection**: Deleted due to unauthorized thum.io image service causing build failures
+- **Location**: Previously at `frontend/src/components/home/sections/hero-video-section.tsx`
+- **Issue**: "Image not authorized. Please sign-up for a paid account" error from thum.io service
+- **Resolution**: Complete removal of component and all import references
+
+### Build Error Prevention
+- Always check for component dependencies before deletion
+- Remove all imports and usages when deleting components
+- Use local static images instead of external screenshot services
 
 ## Testing Patterns
 
