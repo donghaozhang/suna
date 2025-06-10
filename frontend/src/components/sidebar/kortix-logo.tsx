@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 interface QuriositiLogoProps {
   size?: number;
 }
-export function KortixLogo({ size = 24 }: QuriositiLogoProps) {
+export function KortixLogo({ size = 32 }: QuriositiLogoProps) {
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
