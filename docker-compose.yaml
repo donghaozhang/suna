@@ -81,8 +81,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_SUPABASE_URL=https://bxpehjqpokcmlzoemlvn.supabase.co
-        - NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4cGVoanFwb2tjbWx6b2VtbHZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1NDA0NDgsImV4cCI6MjA2MjExNjQ0OH0.yKMrBTGXJ0KeTARt6cz1KlLEV4fIifWNrCcF8hPQlrI
+        - NEXT_PUBLIC_SUPABASE_URL=https://xvhreblsabiwgfkykvvn.supabase.co
+        - NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2aHJlYmxzYWJpd2dma3lrdnZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk1MjA1NTAsImV4cCI6MjA2NTA5NjU1MH0.HXMfRWdqczPmLjKarGCPs8wSoG3lqf-JfG5sAtlcEMw
         - NEXT_PUBLIC_BACKEND_URL=http://localhost:8000/api
         - NEXT_PUBLIC_URL=http://localhost:3000
         - NEXT_PUBLIC_ENV_MODE=LOCAL
