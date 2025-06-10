@@ -39,7 +39,7 @@ suna/
 ### Automated Setup (Recommended)
 ```bash
 # Clone repository
-git clone https://github.com/kortix-ai/suna.git
+git clone https://github.com/donghaozhang/suna.git
 cd suna
 
 # Run automated setup (handles all environment setup)
@@ -178,6 +178,47 @@ npm run format
 - **[frontend/src/providers/](mdc:frontend/src/providers)** - Context providers
 - **[frontend/src/contexts/](mdc:frontend/src/contexts)** - React contexts
 
+## Branding & Logo Assets
+
+### Quriosity Branding System
+The application uses **Quriosity** branding with a three-logo system:
+
+**Primary Logo Files:**
+- `kortix-symbol.svg` - Blue Quriosity "Q" symbol (32x32px default)
+- `kortix-logo.svg` - Horizontal Quriosity logo for light mode  
+- `kortix-logo-white.svg` - Horizontal Quriosity logo for dark mode
+
+**Backup Files:**
+- `kortix-symbol-backup.svg` - Original Kortix symbol
+- `kortix-logo-white-backup.svg` - Original Kortix logo
+- `Quriosity Favicon_App Icon.svg` - Source Quriosity design file
+
+### Logo Component Usage
+```typescript
+// Sidebar logo with custom size
+<KortixLogo size={32} />
+
+// Default logo (32px default size)  
+<KortixLogo />
+
+// Chat avatar (smaller)
+<KortixLogo size={16} />
+```
+
+### Logo Implementation Standards
+- **Component**: `frontend/src/components/sidebar/kortix-logo.tsx`
+- **Alt Text**: All logos use `alt="Quriosity"` or `alt="Quriosity Logo"`
+- **Theme Support**: Automatic light/dark mode switching
+- **Default Size**: 32x32px (increased from 24px for better visibility)
+- **Size Variants**: 16px (chat), 24px (compact), 32px (default), 40px+ (headers)
+
+### Branding Rules
+- **Site Name**: "Quriosity" (not "Kortix Suna")
+- **Product Name**: "Q" (not "Suna") 
+- **Company**: "Quriosity" (not "Kortix")
+- **Description**: "Q by Quriosity – is a generalist AI Agent"
+- **Cache Clearing**: Run `rm -rf .next` when updating logo components
+
 ## Development Tools & Scripts
 
 ### Utility Scripts
@@ -188,21 +229,45 @@ npm run format
 ### Container Development
 ```bash
 # Start all services with Docker Compose
-docker-compose up
+docker compose up
 
 # Start specific services
-docker-compose up backend frontend
+docker compose up backend frontend
 
 # Rebuild containers
-docker-compose build
+docker compose build
 
 # View logs
-docker-compose logs -f backend
-docker-compose logs -f frontend
+docker compose logs -f backend
+docker compose logs -f frontend
 
 # Stop all services
-docker-compose down
+docker compose down
+
+# Clear cache and rebuild (when needed)
+docker compose down
+docker compose build --no-cache frontend
+docker compose up -d
 ```
+
+### Fast Development Workflow
+For faster frontend development (avoid Docker rebuilds):
+
+```bash
+# Keep backend in Docker
+docker compose up backend redis rabbitmq worker
+
+# Run frontend locally for instant hot reload
+cd frontend
+npm install
+npm run dev  # Starts on localhost:3000
+```
+
+Benefits:
+- ⚡ **Instant hot reload** - changes appear immediately
+- 🔧 **No rebuilds** needed  
+- 🐛 **Better debugging** with browser dev tools
+- 🚀 **Faster development cycle**
 
 ## Database Management
 
