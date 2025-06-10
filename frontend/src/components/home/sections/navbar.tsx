@@ -233,7 +233,7 @@ export function Navbar() {
                     {siteConfig.nav.links.map((item) => (
                       <motion.li
                         key={item.id}
-                        className="p-2.5 border-b border-border last:border-b-0"
+                        className="p-2.5"
                         variants={drawerMenuVariants}
                       >
                         <a

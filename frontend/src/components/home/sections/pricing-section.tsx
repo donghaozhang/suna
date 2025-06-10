@@ -6,6 +6,7 @@ import { siteConfig } from '@/lib/home';
 import { cn } from '@/lib/utils';
 import { motion } from 'motion/react';
 import { useState, useEffect, useRef } from 'react';
+import { FlickeringGrid } from '@/components/home/ui/flickering-grid';
 import { CheckIcon } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -621,6 +622,11 @@ export function PricingSection({
   const [isLoading, setIsLoading] = useState<Record<string, boolean>>({});
   const [isFetchingPlan, setIsFetchingPlan] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const fetchCurrentPlan = async () => {
     setIsFetchingPlan(true);
@@ -687,6 +693,44 @@ export function PricingSection({
       id="pricing"
       className={cn("flex flex-col items-center justify-center gap-10 w-full relative", { "pb-20": !insideDialog })}
     >
+      {/* Left background grid */}
+      <div className="absolute left-0 top-0 h-full w-1/3 -z-10 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-background z-10" />
+        <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-background via-background/90 to-transparent z-10" />
+        <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background via-background/90 to-transparent z-10" />
+        
+        {mounted && (
+          <FlickeringGrid
+            className="h-full w-full"
+            squareSize={2.5}
+            gridGap={2.5}
+            color="var(--secondary)"
+            maxOpacity={0.3}
+            flickerChance={0.02}
+          />
+        )}
+      </div>
+
+      {/* Right background grid */}
+      <div className="absolute right-0 top-0 h-full w-1/3 -z-10 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-background z-10" />
+        <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-background via-background/90 to-transparent z-10" />
+        <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background via-background/90 to-transparent z-10" />
+        
+        {mounted && (
+          <FlickeringGrid
+            className="h-full w-full"
+            squareSize={2.5}
+            gridGap={2.5}
+            color="var(--secondary)"
+            maxOpacity={0.3}
+            flickerChance={0.02}
+          />
+        )}
+      </div>
+
+      {/* Center background */}
+      <div className="absolute inset-x-1/4 top-0 h-full -z-20 bg-background rounded-b-xl" />
       {showTitleAndTabs && (
         <>
           <SectionHeader>

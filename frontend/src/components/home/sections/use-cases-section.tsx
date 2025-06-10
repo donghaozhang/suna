@@ -5,6 +5,8 @@ import { siteConfig } from '@/lib/home';
 import { cn } from '@/lib/utils';
 import { motion } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
+import { FlickeringGrid } from '@/components/home/ui/flickering-grid';
+import { useState, useEffect } from 'react';
 
 interface UseCase {
   id: string;
@@ -18,6 +20,12 @@ interface UseCase {
 }
 
 export function UseCasesSection() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Get featured use cases from siteConfig and limit to 8
   const featuredUseCases: UseCase[] = (siteConfig.useCases || []).filter(
     (useCase: UseCase) => useCase.featured,
@@ -28,6 +36,44 @@ export function UseCasesSection() {
       id="use-cases"
       className="flex flex-col items-center justify-center gap-10 pb-10 w-full relative"
     >
+      {/* Left background grid */}
+      <div className="absolute left-0 top-0 h-full w-1/3 -z-10 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-background z-10" />
+        <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-background via-background/90 to-transparent z-10" />
+        <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background via-background/90 to-transparent z-10" />
+        
+        {mounted && (
+          <FlickeringGrid
+            className="h-full w-full"
+            squareSize={2.5}
+            gridGap={2.5}
+            color="var(--secondary)"
+            maxOpacity={0.3}
+            flickerChance={0.02}
+          />
+        )}
+      </div>
+
+      {/* Right background grid */}
+      <div className="absolute right-0 top-0 h-full w-1/3 -z-10 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-background z-10" />
+        <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-background via-background/90 to-transparent z-10" />
+        <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background via-background/90 to-transparent z-10" />
+        
+        {mounted && (
+          <FlickeringGrid
+            className="h-full w-full"
+            squareSize={2.5}
+            gridGap={2.5}
+            color="var(--secondary)"
+            maxOpacity={0.3}
+            flickerChance={0.02}
+          />
+        )}
+      </div>
+
+      {/* Center background */}
+      <div className="absolute inset-x-1/4 top-0 h-full -z-20 bg-background rounded-b-xl" />
       <SectionHeader>
         <h2 className="text-3xl md:text-4xl font-medium tracking-tighter text-center text-balance">
           See Q in action
@@ -69,8 +115,6 @@ export function UseCasesSection() {
               </div>
 
               <div className="mt-auto">
-                <hr className="border-border dark:border-white/20 m-0" />
-
                 <div className="w-full h-[160px] bg-accent/10">
                   <div className="relative w-full h-full overflow-hidden">
                     <img

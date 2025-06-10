@@ -2,7 +2,9 @@
 
 import { SectionHeader } from '@/components/home/section-header';
 import { ArrowRight, Coffee, Gamepad, Monitor, Palette, Play, PaintBucket } from 'lucide-react';
+import { FlickeringGrid } from '@/components/home/ui/flickering-grid';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 
 const showcaseAgents = [
   {
@@ -10,7 +12,7 @@ const showcaseAgents = [
     title: 'Quriosity Game Agent',
     description: 'An interactive card game implementation with Black Myth-inspired themes. Experience traditional Chinese card gameplay with modern web technology.',
     icon: <Gamepad className="w-5 h-5" />,
-    buttonText: 'Play Game',
+    buttonText: 'View Game',
     color: 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800',
     iconColor: 'bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400',
     url: '#',
@@ -40,7 +42,7 @@ const showcaseAgents = [
     title: 'Quriosity Web Agent',
     description: 'Experience our autonomous AI agent that plans complex trips using web search, code execution, and multi-step reasoning. Watch it plan a Tokyo-Kyoto-Osaka journey in real-time.',
     icon: <Monitor className="w-5 h-5" />,
-    buttonText: 'View Demo',
+    buttonText: 'View Agent',
     color: 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800',
     iconColor: 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400',
     url: '#',
@@ -50,7 +52,7 @@ const showcaseAgents = [
     title: 'Quriosity Art Agent',
     description: 'A mesmerizing animation of AI-generated poker cards, inspired by the Black Myth: Wukong art style.',
     icon: <PaintBucket className="w-5 h-5" />,
-    buttonText: 'View Animation',
+    buttonText: 'View Gallery',
     color: 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 ring-2 ring-amber-300 dark:ring-amber-600',
     iconColor: 'bg-amber-100 dark:bg-amber-900 text-amber-600 dark:text-amber-400',
     url: '#',
@@ -69,12 +71,57 @@ const showcaseAgents = [
 ];
 
 export function QuriositShowcase() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <section
       id="showcases"
       className="flex flex-col items-center justify-center w-full relative py-10"
     >
-      <div className="w-full max-w-6xl mx-auto px-6">
+      {/* Left background grid */}
+      <div className="absolute left-0 top-0 h-full w-1/3 -z-10 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-background z-10" />
+        <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-background via-background/90 to-transparent z-10" />
+        <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background via-background/90 to-transparent z-10" />
+        
+        {mounted && (
+          <FlickeringGrid
+            className="h-full w-full"
+            squareSize={2.5}
+            gridGap={2.5}
+            color="var(--secondary)"
+            maxOpacity={0.3}
+            flickerChance={0.02}
+          />
+        )}
+      </div>
+
+      {/* Right background grid */}
+      <div className="absolute right-0 top-0 h-full w-1/3 -z-10 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-background z-10" />
+        <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-background via-background/90 to-transparent z-10" />
+        <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background via-background/90 to-transparent z-10" />
+        
+        {mounted && (
+          <FlickeringGrid
+            className="h-full w-full"
+            squareSize={2.5}
+            gridGap={2.5}
+            color="var(--secondary)"
+            maxOpacity={0.3}
+            flickerChance={0.02}
+          />
+        )}
+      </div>
+
+      {/* Center background */}
+      <div className="absolute inset-x-1/4 top-0 h-full -z-20 bg-background rounded-b-xl" />
+
+      <div className="w-full max-w-6xl mx-auto px-6 relative z-10">
         <SectionHeader>
           <h2 className="text-3xl md:text-4xl font-medium tracking-tighter text-center text-balance pb-1">
             <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
