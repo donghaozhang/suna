@@ -1,18 +1,15 @@
-FROM python:3.11-slim
+FROM python:3.11
 
-# Set environment variables
+# Set environment variables for Python and locale
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     ENV_MODE="production" \
-    PYTHONPATH=/app
+    DEBIAN_FRONTEND=noninteractive \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    PYTHONIOENCODING=utf-8
 
 WORKDIR /app
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user and set up directories
 RUN useradd -m -u 1000 appuser && \
@@ -37,8 +34,6 @@ EXPOSE 8000
 ENV WORKERS=33
 ENV THREADS=2
 ENV WORKER_CONNECTIONS=2000
-
-EXPOSE 8000
 
 # Gunicorn configuration
 CMD ["sh", "-c", "gunicorn api:app \
