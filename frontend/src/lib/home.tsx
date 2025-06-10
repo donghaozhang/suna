@@ -1112,9 +1112,9 @@ export const siteConfig = {
     {
       title: 'Quriosity',
       links: [
-        { id: 1, title: 'About', url: 'https://kortix.ai' },
+        { id: 1, title: 'About', url: 'https://quriosity.com.au/' },
         { id: 3, title: 'Contact', url: 'mailto:hey@kortix.ai' },
-        { id: 4, title: 'Careers', url: 'https://kortix.ai/careers' },
+        { id: 4, title: 'Careers', url: 'https://quriosity.com.au/' },
       ],
     },
     {
@@ -1123,9 +1123,9 @@ export const siteConfig = {
         {
           id: 5,
           title: 'Documentation',
-          url: 'https://github.com/Kortix-ai/Suna',
+          url: 'https://quriosity.com.au/',
         },
-        { id: 7, title: 'Discord', url: 'https://discord.gg/Py6pCBUUPw' },
+        { id: 7, title: 'Discord', url: 'https://quriosity.com.au/' },
         { id: 8, title: 'GitHub', url: 'https://github.com/Kortix-ai/Suna' },
       ],
     },
@@ -1135,17 +1135,17 @@ export const siteConfig = {
         {
           id: 9,
           title: 'Privacy Policy',
-          url: 'https://suna.so/legal?tab=privacy',
+          url: 'https://quriosity.com.au/',
         },
         {
           id: 10,
           title: 'Terms of Service',
-          url: 'https://suna.so/legal?tab=terms',
+          url: 'https://quriosity.com.au/',
         },
         {
           id: 11,
           title: 'License Apache 2.0',
-          url: 'https://github.com/Kortix-ai/Suna/blob/main/LICENSE',
+          url: 'https://quriosity.com.au/',
         },
       ],
     },
