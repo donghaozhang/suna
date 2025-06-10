@@ -584,16 +584,100 @@ export function useApiMutation<T, E = unknown>(
 }
 ```
 
-## Quriosity Showcase Component Pattern
+## Home Page Section Patterns
 
-### Component Structure
+### FlickeringGrid Background Standard
+All home page sections should use consistent FlickeringGrid backgrounds for visual unity:
+
+```typescript
+'use client'
+
+import { FlickeringGrid } from '@/components/home/ui/flickering-grid';
+import { useState, useEffect } from 'react';
+
+export function SectionComponent() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  return (
+    <section className="flex flex-col items-center justify-center w-full relative py-10">
+      {/* Left background grid */}
+      <div className="absolute left-0 top-0 h-full w-1/3 -z-10 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-background z-10" />
+        <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-background via-background/90 to-transparent z-10" />
+        <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background via-background/90 to-transparent z-10" />
+        
+        {mounted && (
+          <FlickeringGrid
+            className="h-full w-full"
+            squareSize={2.5}
+            gridGap={2.5}
+            color="var(--secondary)"
+            maxOpacity={0.3}
+            flickerChance={0.02}
+          />
+        )}
+      </div>
+
+      {/* Right background grid */}
+      <div className="absolute right-0 top-0 h-full w-1/3 -z-10 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-background z-10" />
+        <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-background via-background/90 to-transparent z-10" />
+        <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background via-background/90 to-transparent z-10" />
+        
+        {mounted && (
+          <FlickeringGrid
+            className="h-full w-full"
+            squareSize={2.5}
+            gridGap={2.5}
+            color="var(--secondary)"
+            maxOpacity={0.3}
+            flickerChance={0.02}
+          />
+        )}
+      </div>
+
+      {/* Center background */}
+      <div className="absolute inset-x-1/4 top-0 h-full -z-20 bg-background rounded-b-xl" />
+      
+      {/* Section content */}
+      <div className="w-full max-w-6xl mx-auto px-6 relative z-10">
+        {/* Your section content here */}
+      </div>
+    </section>
+  );
+}
+```
+
+### FlickeringGrid Standards
+- **Consistent parameters**: `squareSize={2.5}`, `gridGap={2.5}`, `maxOpacity={0.3}`, `flickerChance={0.02}`
+- **Color scheme**: Use `var(--secondary)` for consistent theming
+- **Layout pattern**: Left/right grids (1/3 width each) with center content area
+- **Gradient overlays**: Fade grids toward center and at top/bottom edges
+- **Z-index layering**: Background (-z-20), grids (-z-10), content (z-10)
+- **Mounted state**: Always check `mounted` state to prevent hydration issues
+
+### No Horizontal Dividers Rule
+**Never use horizontal divider lines between home page sections:**
+- ❌ Avoid: `divide-y divide-border`, `border-t`, `border-b`, `<hr>` elements
+- ✅ Instead: Use FlickeringGrid backgrounds for visual separation
+- ✅ Seamless flow: Sections should flow without visible borders
+
+### Quriosity Showcase Component Pattern
+
+#### Component Structure
 ```typescript
 // components/home/sections/quriosity-showcase.tsx
 'use client'
 
 import { SectionHeader } from '@/components/home/section-header';
 import { ArrowRight, Coffee, Gamepad, Monitor, Palette, Play, PaintBucket } from 'lucide-react';
+import { FlickeringGrid } from '@/components/home/ui/flickering-grid';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 
 const showcaseAgents = [
   {
@@ -611,32 +695,44 @@ const showcaseAgents = [
 ];
 
 export function QuriositShowcase() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
-    <section className="py-20">
-      <SectionHeader>
-        <h2 className="gradient-text">Showcases</h2>
-        <p>Description text</p>
-      </SectionHeader>
+    <section className="flex flex-col items-center justify-center w-full relative py-10">
+      {/* FlickeringGrid background pattern */}
+      {/* ... (use standard FlickeringGrid pattern above) ... */}
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {showcaseAgents.map((agent) => (
-          <div key={agent.id} className={`card-styles ${agent.color}`}>
-            {/* Card content */}
-          </div>
-        ))}
+      <div className="w-full max-w-6xl mx-auto px-6 relative z-10">
+        <SectionHeader>
+          <h2 className="gradient-text">Showcases</h2>
+          <p>Description text</p>
+        </SectionHeader>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {showcaseAgents.map((agent) => (
+            <div key={agent.id} className={`card-styles ${agent.color}`}>
+              {/* Card content */}
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
 }
 ```
 
-### Design Patterns
+#### Design Patterns
 - **Color-coded cards**: Each agent has unique color scheme
 - **Interactive hover effects**: Scale and shadow on hover
 - **Featured highlighting**: Special styling for featured agents
 - **Responsive grid**: 1 column mobile, 2 tablet, 3 desktop
 - **Gradient title**: Blue-to-purple gradient for "Showcases"
 - **Optimized spacing**: Use `py-10` instead of `py-20` for tighter layout spacing
+- **FlickeringGrid background**: Always include standard grid pattern
 
 ## Performance Optimization
 

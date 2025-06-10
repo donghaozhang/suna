@@ -241,6 +241,26 @@ The application uses **Quriosity** branding with a three-logo system:
 - **Import Cleanup**: Removed all imports and usages of `HeroVideoSection` from `hero-section.tsx`
 - **Layout Optimization**: Reduced showcase section padding from `py-20` to `py-10` for better spacing
 
+### FlickeringGrid Background System
+- **Universal Implementation**: All home page sections now use FlickeringGrid backgrounds for visual consistency
+- **Standard Pattern**: Left/right grid panels (1/3 width each) with gradient overlays
+- **Consistent Parameters**: `squareSize={2.5}`, `gridGap={2.5}`, `maxOpacity={0.3}`, `flickerChance={0.02}`
+- **Sections Updated**: 
+  - `use-cases-section.tsx` - Added FlickeringGrid + removed `<hr>` divider
+  - `open-source-section.tsx` - Added FlickeringGrid background
+  - `pricing-section.tsx` - Added FlickeringGrid background
+  - `cta-section.tsx` - Added FlickeringGrid + changed to light blue (`bg-sky-400`)
+  - `quriosity-showcase.tsx` - Already had FlickeringGrid
+  - `hero-section.tsx` - Already had FlickeringGrid
+  - `footer-section.tsx` - Already had FlickeringGrid
+
+### Horizontal Divider Removal
+- **Main Container**: Removed `divide-y divide-border` from `frontend/src/app/(home)/page.tsx`
+- **Section Dividers**: Removed all `<hr>`, `border-t`, `border-b` elements between sections
+- **Mobile Menu**: Removed `border-b border-border` from navbar menu items
+- **Auth Dialog**: Removed horizontal line in hero section's email/password divider
+- **Design Goal**: Seamless section flow without visible border interruptions
+
 ## Development Tools & Scripts
 
 ### Utility Scripts
