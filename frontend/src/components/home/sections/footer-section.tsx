@@ -44,10 +44,10 @@ export function FooterSection() {
 
           <div className="flex items-center gap-4">
             <a
-              href="https://github.com/kortix-ai/suna"
+              href="https://quriosity.com.au/"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="GitHub"
+              aria-label="Quriosity Website"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
