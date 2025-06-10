@@ -72,7 +72,7 @@ export function QuriositShowcase() {
   return (
     <section
       id="showcases"
-      className="flex flex-col items-center justify-center w-full relative py-20"
+      className="flex flex-col items-center justify-center w-full relative py-10"
     >
       <div className="w-full max-w-6xl mx-auto px-6">
         <SectionHeader>

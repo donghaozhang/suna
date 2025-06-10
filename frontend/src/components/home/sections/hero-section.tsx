@@ -1,5 +1,4 @@
 'use client';
-import { HeroVideoSection } from '@/components/home/sections/hero-video-section';
 import { siteConfig } from '@/lib/home';
 import { ArrowRight, Github, X, AlertCircle } from 'lucide-react';
 import { FlickeringGrid } from '@/components/home/ui/flickering-grid';
@@ -336,9 +335,7 @@ export function HeroSection() {
           </div>
         </div>
       </div>
-      <div className="mb-10 max-w-4xl mx-auto">
-        <HeroVideoSection />
-      </div>
+             {/* Hero video section removed */}
 
       {/* Auth Dialog */}
       <Dialog open={authDialogOpen} onOpenChange={setAuthDialogOpen}>
