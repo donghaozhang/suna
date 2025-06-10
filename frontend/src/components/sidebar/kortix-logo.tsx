@@ -4,10 +4,10 @@ import Image from 'next/image';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 
-interface KortixLogoProps {
+interface QuriositiLogoProps {
   size?: number;
 }
-export function KortixLogo({ size = 24 }: KortixLogoProps) {
+export function KortixLogo({ size = 24 }: QuriositiLogoProps) {
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -16,13 +16,16 @@ export function KortixLogo({ size = 24 }: KortixLogoProps) {
     setMounted(true);
   }, []);
 
+  // Use proper light/dark mode logos instead of CSS invert
+  const logoSrc = mounted && theme === 'dark' ? '/kortix-logo-white.svg' : '/kortix-symbol.svg';
+
   return (
     <Image
-        src="/kortix-symbol.svg"
-        alt="Kortix"
+        src={logoSrc}
+        alt="Quriosity"
         width={size}
         height={size}
-        className={`${mounted && theme === 'dark' ? 'invert' : ''} flex-shrink-0`}
+        className="flex-shrink-0"
       />
   );
 }
