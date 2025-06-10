@@ -7,6 +7,7 @@ import { FooterSection } from '@/components/home/sections/footer-section';
 import { HeroSection } from '@/components/home/sections/hero-section';
 import { OpenSourceSection } from '@/components/home/sections/open-source-section';
 import { PricingSection } from '@/components/home/sections/pricing-section';
+import { QuriositShowcase } from '@/components/home/sections/quriosity-showcase';
 import { UseCasesSection } from '@/components/home/sections/use-cases-section';
 import { ModalProviders } from '@/providers/modal-providers';
 
@@ -17,6 +18,7 @@ export default function Home() {
       <main className="flex flex-col items-center justify-center min-h-screen w-full">
         <div className="w-full divide-y divide-border">
           <HeroSection />
+          <QuriositShowcase />
           <UseCasesSection />
           {/* <CompanyShowcase /> */}
           {/* <BentoSection /> */}

@@ -99,7 +99,7 @@ export const siteConfig = {
     badge: '100% OPEN SOURCE',
     githubUrl: 'https://github.com/kortix-ai/suna',
     title: 'Q, the AI Employee.',
-      description:
+    description:
     'Q by Quriosity – is a generalist AI Agent that acts on your behalf.',
   inputPlaceholder: 'Ask Q to...',
   },
@@ -1110,7 +1110,7 @@ export const siteConfig = {
   },
   footerLinks: [
     {
-      title: 'Kortix',
+      title: 'Quriosity',
       links: [
         { id: 1, title: 'About', url: 'https://kortix.ai' },
         { id: 3, title: 'Contact', url: 'mailto:hey@kortix.ai' },
