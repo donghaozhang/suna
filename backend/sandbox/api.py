@@ -337,6 +337,7 @@ async def ensure_project_sandbox_active(
     """
     Ensure that a project's sandbox is active and running.
     Checks the sandbox status and starts it if it's not running.
+    Also updates the VNC URLs in the database.
     """
     logger.info(f"Received ensure sandbox active request for project {project_id}, user_id: {user_id}")
     client = await db.client
@@ -373,17 +374,50 @@ async def ensure_project_sandbox_active(
             raise HTTPException(status_code=404, detail="No sandbox found for this project")
             
         sandbox_id = sandbox_info['id']
+        sandbox_pass = sandbox_info.get('pass')
         
         # Get or start the sandbox
         logger.info(f"Ensuring sandbox is active for project {project_id}")
         sandbox = await get_or_start_sandbox(sandbox_id)
+        
+        # Get updated preview links
+        try:
+            vnc_link = sandbox.get_preview_link(6080)
+            website_link = sandbox.get_preview_link(8080)
+            vnc_url = vnc_link.url if hasattr(vnc_link, 'url') else str(vnc_link).split("url='")[1].split("'")[0]
+            website_url = website_link.url if hasattr(website_link, 'url') else str(website_link).split("url='")[1].split("'")[0]
+            token = None
+            if hasattr(vnc_link, 'token'):
+                token = vnc_link.token
+            elif "token='" in str(vnc_link):
+                token = str(vnc_link).split("token='")[1].split("'")[0]
+            
+            # Update project with fresh sandbox URLs
+            update_result = await client.table('projects').update({
+                'sandbox': {
+                    'id': sandbox_id, 
+                    'pass': sandbox_pass, 
+                    'vnc_preview': vnc_url,
+                    'sandbox_url': website_url, 
+                    'token': token
+                }
+            }).eq('project_id', project_id).execute()
+            
+            if update_result.data:
+                logger.info(f"Updated project {project_id} with fresh VNC URLs: {vnc_url}")
+            else:
+                logger.warning(f"Failed to update project {project_id} with fresh VNC URLs")
+                
+        except Exception as url_error:
+            logger.warning(f"Error updating VNC URLs for project {project_id}: {str(url_error)}")
+            # Don't fail the whole request if URL update fails
         
         logger.info(f"Successfully ensured sandbox {sandbox_id} is active for project {project_id}")
         
         return {
             "status": "success", 
             "sandbox_id": sandbox_id,
-            "message": "Sandbox is active"
+            "message": "Sandbox is active and URLs updated"
         }
     except Exception as e:
         logger.error(f"Error ensuring sandbox is active for project {project_id}: {str(e)}")
