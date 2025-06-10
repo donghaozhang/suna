@@ -217,7 +217,24 @@ The application uses **Quriosity** branding with a three-logo system:
 - **Product Name**: "Q" (not "Suna") 
 - **Company**: "Quriosity" (not "Kortix")
 - **Description**: "Q by Quriosity – is a generalist AI Agent"
+- **Footer Title**: "Quriosity" (not "Kortix")
+- **Repository Display**: "Quriosity/Q" (not "kortix-ai/suna")
+- **External Links**: Point to https://quriosity.com.au/ for most footer links
 - **Cache Clearing**: Run `rm -rf .next` when updating logo components
+
+### Homepage Sections
+- **Quriosity Showcase**: New section with 6 agent cards between Hero and Use Cases
+  - Game Agent, Design Agent, Brand Agent, Web Agent, Art Agent, Clone Agent
+  - Color-coded cards with interactive hover effects
+  - Located in `frontend/src/components/home/sections/quriosity-showcase.tsx`
+
+### Footer Configuration
+- **Location**: `frontend/src/lib/home.tsx` in `footerLinks` array
+- **Updated Links**: Most footer links now point to https://quriosity.com.au/
+- **Exceptions**: 
+  - Contact remains as `mailto:hey@kortix.ai`
+  - GitHub still points to code repository
+- **Sidebar CTA**: "Join Our Team" link points to https://quriosity.com.au/
 
 ## Development Tools & Scripts
 

@@ -76,6 +76,13 @@ suna/
 │   │   │   ├── share/         # Public sharing
 │   │   │   └── api/           # API routes
 │   │   ├── components/        # React components
+│   │   │   ├── home/          # Landing page components
+│   │   │   │   ├── sections/  # Page sections
+│   │   │   │   │   ├── quriosity-showcase.tsx # Quriosity agents showcase
+│   │   │   │   │   ├── hero-section.tsx      # Hero section
+│   │   │   │   │   ├── footer-section.tsx    # Footer with Quriosity links
+│   │   │   │   │   └── ...                   # Other sections
+│   │   │   │   └── ui/        # Home-specific UI
 │   │   │   ├── thread/        # Chat/conversation UI
 │   │   │   ├── sidebar/       # Navigation
 │   │   │   ├── billing/       # Payment components
@@ -100,7 +107,16 @@ suna/
 
 ## Architecture Overview
 
-Suna is an open-source AI agent platform with a modern, scalable architecture consisting of four main components:
+Suna is an open-source AI agent platform built by Quriosity with a modern, scalable architecture consisting of four main components:
+
+## Quriosity Branding Integration
+
+- **Site Name**: "Quriosity" (updated from "Kortix Suna")
+- **Product Name**: "Q" (updated from "Suna")
+- **Repository Display**: "Quriosity/Q" in open source section
+- **Footer Links**: Point to https://quriosity.com.au/ for most external links
+- **Showcase Section**: New component featuring 6 Quriosity agent demonstrations
+- **Logo System**: Three-logo system with Quriosity branding
 
 ### 1. Backend API (FastAPI)
 - **Primary Technology**: Python with FastAPI framework

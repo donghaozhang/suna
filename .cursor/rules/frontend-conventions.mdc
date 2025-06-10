@@ -62,6 +62,12 @@ frontend/
 │   │   ├── file-renderers/       # File display components
 │   │   ├── home/                 # Landing page components
 │   │   │   ├── sections/         # Page sections
+│   │   │   │   ├── quriosity-showcase.tsx # Quriosity agents showcase
+│   │   │   │   ├── hero-section.tsx      # Hero section
+│   │   │   │   ├── use-cases-section.tsx # Use cases display
+│   │   │   │   ├── open-source-section.tsx # Open source info
+│   │   │   │   ├── footer-section.tsx    # Footer with Quriosity links
+│   │   │   │   └── ...                   # Other sections
 │   │   │   └── ui/               # Home-specific UI
 │   │   ├── maintenance/          # Maintenance mode
 │   │   ├── payment/              # Payment processing
@@ -577,6 +583,59 @@ export function useApiMutation<T, E = unknown>(
   })
 }
 ```
+
+## Quriosity Showcase Component Pattern
+
+### Component Structure
+```typescript
+// components/home/sections/quriosity-showcase.tsx
+'use client'
+
+import { SectionHeader } from '@/components/home/section-header';
+import { ArrowRight, Coffee, Gamepad, Monitor, Palette, Play, PaintBucket } from 'lucide-react';
+import Link from 'next/link';
+
+const showcaseAgents = [
+  {
+    id: 'agent-id',
+    title: 'Quriosity Agent Name',
+    description: 'Agent description text...',
+    icon: <IconComponent className="w-5 h-5" />,
+    buttonText: 'Action Text',
+    color: 'bg-color-50 dark:bg-color-950/20 border-color-200 dark:border-color-800',
+    iconColor: 'bg-color-100 dark:bg-color-900 text-color-600 dark:text-color-400',
+    url: '#',
+    featured?: boolean, // Optional featured highlighting
+  },
+  // ... more agents
+];
+
+export function QuriositShowcase() {
+  return (
+    <section className="py-20">
+      <SectionHeader>
+        <h2 className="gradient-text">Showcases</h2>
+        <p>Description text</p>
+      </SectionHeader>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {showcaseAgents.map((agent) => (
+          <div key={agent.id} className={`card-styles ${agent.color}`}>
+            {/* Card content */}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+```
+
+### Design Patterns
+- **Color-coded cards**: Each agent has unique color scheme
+- **Interactive hover effects**: Scale and shadow on hover
+- **Featured highlighting**: Special styling for featured agents
+- **Responsive grid**: 1 column mobile, 2 tablet, 3 desktop
+- **Gradient title**: Blue-to-purple gradient for "Showcases"
 
 ## Performance Optimization
 
