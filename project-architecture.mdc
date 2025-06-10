@@ -1,0 +1,226 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Suna Project Architecture
+
+## File Structure Overview
+
+```
+suna/
+├── backend/                          # Python/FastAPI Backend Service
+│   ├── agent/                        # Agent Core System
+│   │   ├── tools/                    # Agent Tools and Capabilities
+│   │   │   ├── data_providers/       # External Data Source Integrations
+│   │   │   ├── browser_automation.py
+│   │   │   ├── code_execution.py
+│   │   │   ├── file_operations.py
+│   │   │   └── web_search.py
+│   │   ├── agent_manager.py          # Agent Lifecycle Management
+│   │   ├── executor.py               # Tool Execution Engine
+│   │   └── schemas.py                # Agent Data Models
+│   ├── agentpress/                   # Agent Marketplace/Builder
+│   │   ├── models/                   # Agent Templates and Configs
+│   │   ├── builder.py                # Agent Builder Interface
+│   │   └── marketplace.py            # Agent Sharing Platform
+│   ├── mcp_local/                    # Model Context Protocol Integration
+│   │   ├── tools/                    # MCP Tool Implementations
+│   │   ├── providers/                # MCP Service Providers
+│   │   └── server.py                 # MCP Server Implementation
+│   ├── sandbox/                      # Secure Execution Environment
+│   │   ├── docker/                   # Docker Configuration
+│   │   ├── daytona/                  # Daytona Integration
+│   │   ├── isolation.py              # Sandbox Security
+│   │   └── resources.py              # Resource Management
+│   ├── services/                     # Backend Services
+│   │   ├── auth.py                   # Authentication Service
+│   │   ├── llm.py                    # LLM Provider Integration
+│   │   ├── storage.py                # File Storage Service
+│   │   └── websocket.py              # Real-time Communication
+│   ├── supabase/                     # Database Integration
+│   │   ├── migrations/               # Database Schema Migrations
+│   │   ├── client.py                 # Supabase Client
+│   │   └── models.py                 # Database Models
+│   ├── utils/                        # Backend Utilities
+│   │   ├── scripts/                  # Setup and Maintenance Scripts
+│   │   ├── logging.py                # Logging Configuration
+│   │   └── validators.py             # Input Validation
+│   ├── api.py                        # Main FastAPI Application
+│   ├── run_agent_background.py       # Background Agent Execution
+│   └── requirements.txt              # Python Dependencies
+├── frontend/                         # Next.js/React Frontend
+│   ├── src/
+│   │   ├── app/                      # Next.js App Router
+│   │   │   ├── (dashboard)/          # Dashboard Layout Group
+│   │   │   │   ├── (personalAccount)/
+│   │   │   │   │   └── settings/     # Personal Account Settings
+│   │   │   │   └── (teamAccount)/
+│   │   │   │       └── [accountSlug]/
+│   │   │   │           └── settings/ # Team Account Settings
+│   │   │   ├── (home)/               # Home Layout Group
+│   │   │   │   ├── page.tsx          # Landing Page
+│   │   │   │   └── layout.tsx        # Home Layout
+│   │   │   ├── agents/               # Agent Management
+│   │   │   │   ├── [threadId]/       # Individual Agent Thread
+│   │   │   │   ├── builder/          # Agent Builder Interface
+│   │   │   │   └── marketplace/      # Agent Marketplace
+│   │   │   ├── auth/                 # Authentication Pages
+│   │   │   │   ├── callback/         # OAuth Callback
+│   │   │   │   └── reset-password/   # Password Reset
+│   │   │   ├── dashboard/            # Main Dashboard
+│   │   │   ├── share/                # Public Thread Sharing
+│   │   │   │   └── [threadId]/       # Shared Thread View
+│   │   │   ├── layout.tsx            # Root Layout
+│   │   │   └── page.tsx              # Root Page
+│   │   ├── components/               # React Components
+│   │   │   ├── basejump/             # Base Authentication Components
+│   │   │   ├── billing/              # Billing and Subscription Components
+│   │   │   ├── file-renderers/       # File Display Components
+│   │   │   ├── home/                 # Landing Page Components
+│   │   │   │   ├── sections/         # Page Sections
+│   │   │   │   └── ui/               # Home UI Components
+│   │   │   ├── sidebar/              # Navigation Sidebar
+│   │   │   ├── thread/               # Chat Thread Components
+│   │   │   │   ├── tool-views/       # Tool Result Renderers
+│   │   │   │   ├── chat-interface.tsx
+│   │   │   │   ├── message-list.tsx
+│   │   │   │   └── thread-header.tsx
+│   │   │   └── ui/                   # Shared UI Components
+│   │   │       ├── button.tsx
+│   │   │       ├── input.tsx
+│   │   │       ├── dialog.tsx
+│   │   │       └── toast.tsx
+│   │   ├── contexts/                 # React Context Providers
+│   │   │   ├── auth-context.tsx      # Authentication Context
+│   │   │   ├── theme-context.tsx     # Theme Management
+│   │   │   └── websocket-context.tsx # Real-time Communication
+│   │   ├── hooks/                    # Custom React Hooks
+│   │   │   ├── use-auth.ts           # Authentication Hook
+│   │   │   ├── use-threads.ts        # Thread Management Hook
+│   │   │   ├── use-websocket.ts      # WebSocket Hook
+│   │   │   └── use-agents.ts         # Agent Management Hook
+│   │   ├── lib/                      # Frontend Utilities
+│   │   │   ├── actions/              # Server Actions
+│   │   │   │   ├── auth.ts           # Authentication Actions
+│   │   │   │   ├── threads.ts        # Thread Actions
+│   │   │   │   └── agents.ts         # Agent Actions
+│   │   │   ├── supabase/             # Supabase Client Configuration
+│   │   │   │   ├── client.ts         # Browser Client
+│   │   │   │   ├── server.ts         # Server Client
+│   │   │   │   └── middleware.ts     # Auth Middleware
+│   │   │   └── utils/                # Utility Functions
+│   │   │       ├── cn.ts             # Tailwind Class Names
+│   │   │       ├── date.ts           # Date Utilities
+│   │   │       └── format.ts         # Text Formatting
+│   │   ├── providers/                # React Query and Global Providers
+│   │   ├── types/                    # TypeScript Type Definitions
+│   │   └── styles/                   # Global Styles
+│   ├── public/                       # Static Assets
+│   │   ├── banner.png                # Project Banner
+│   │   ├── favicon.ico               # Site Icon
+│   │   └── icons/                    # UI Icons
+│   ├── package.json                  # Node.js Dependencies
+│   ├── tailwind.config.js            # Tailwind CSS Configuration
+│   └── tsconfig.json                 # TypeScript Configuration
+├── supabase/                         # Supabase Configuration
+│   ├── config.toml                   # Supabase Project Config
+│   ├── seed.sql                      # Database Seed Data
+│   └── migrations/                   # Database Migrations
+├── docs/                             # Documentation
+│   ├── images/                       # Documentation Images
+│   │   └── diagram.png               # Architecture Diagram
+│   ├── SELF-HOSTING.md               # Self-hosting Guide
+│   └── API.md                        # API Documentation
+├── .github/                          # GitHub Configuration
+│   ├── workflows/                    # CI/CD Workflows
+│   └── ISSUE_TEMPLATE/               # Issue Templates
+├── docker-compose.yaml               # Development Docker Setup
+├── setup.py                         # Interactive Setup Wizard
+├── start.py                          # Application Startup Script
+├── README.md                         # Project Documentation
+└── CONTRIBUTING.md                   # Contribution Guidelines
+```
+
+## Core Architecture Components
+
+### 1. Backend API (Python/FastAPI)
+- **Primary Role**: REST API, LLM integration, agent orchestration
+- **Key Technologies**: FastAPI, LiteLLM, Anthropic Claude, OpenAI
+- **Main Files**: 
+  - `api.py` - Main FastAPI application with all endpoints
+  - `run_agent_background.py` - Background agent execution engine
+  - `agent/` - Core agent system and tools
+  - `services/` - Backend services (auth, LLM, storage, websocket)
+
+### 2. Frontend (Next.js/React)
+- **Primary Role**: User interface, chat interface, dashboard
+- **Key Technologies**: Next.js 14 App Router, React, TypeScript, Tailwind CSS
+- **Architecture Pattern**: App Router with layout groups and server components
+- **Main Features**: 
+  - Real-time chat interface with agent threads
+  - Agent builder and marketplace
+  - Account management (personal/team)
+  - File rendering and tool result visualization
+
+### 3. Agent Docker/Sandbox (Daytona Integration)
+- **Primary Role**: Secure, isolated execution environment for agents
+- **Key Technologies**: Docker, Daytona, Playwright, secure filesystems
+- **Capabilities**:
+  - Browser automation with Playwright
+  - Code execution in isolated containers
+  - File system operations with sandboxing
+  - Network access control and monitoring
+
+### 4. Supabase Database
+- **Primary Role**: Data persistence, authentication, real-time subscriptions
+- **Key Technologies**: PostgreSQL, Supabase Auth, Supabase Storage
+- **Data Models**:
+  - Users and authentication
+  - Thread and message history
+  - Agent configurations and marketplace
+  - File storage and metadata
+  - Analytics and usage tracking
+
+### 5. Model Context Protocol (MCP) Integration
+- **Primary Role**: Extensible tool and data provider ecosystem
+- **Location**: `backend/mcp_local/`
+- **Features**:
+  - Local MCP server implementation
+  - Custom tool providers (LinkedIn, Tavily, Firecrawl, Amazon, RapidAPI)
+  - Dynamic tool discovery and registration
+  - Standardized tool interfaces
+
+## Agent Capabilities
+
+### Core Tools
+1. **Browser Automation** - Playwright-based web navigation and data extraction
+2. **File Operations** - Document creation, editing, and management
+3. **Web Search** - Tavily integration for enhanced search capabilities
+4. **Code Execution** - Secure Python code interpreter
+5. **API Integration** - RapidAPI and custom service connections
+
+### Data Providers (MCP)
+1. **LinkedIn** - Professional network data and prospecting
+2. **Tavily** - Web search and content discovery
+3. **Firecrawl** - Web scraping and content extraction
+4. **Amazon** - Product research and e-commerce data
+5. **RapidAPI** - Access to thousands of APIs
+
+### Security & Isolation
+- Docker-based sandboxing for all agent operations
+- Daytona integration for secure development environments
+- Resource limits and monitoring
+- Network isolation and controlled access
+- File system sandboxing with restricted permissions
+
+## Key Integrations
+
+- **LLM Providers**: Anthropic Claude, OpenAI, Groq (via LiteLLM)
+- **Authentication**: Supabase Auth with OAuth providers
+- **Storage**: Supabase Storage for files and assets
+- **Real-time**: WebSocket connections for live updates
+- **Execution**: Daytona for secure agent sandboxing
+- **Search**: Tavily for enhanced web search
+- **Scraping**: Firecrawl for content extraction
+- **APIs**: RapidAPI for service integrations
