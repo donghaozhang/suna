@@ -98,10 +98,10 @@ export const siteConfig = {
     ),
     badge: '100% OPEN SOURCE',
     githubUrl: 'https://github.com/kortix-ai/suna',
-    title: 'Suna, the AI Employee.',
-    description:
-      'Suna by Kortix – is a generalist AI Agent that acts on your behalf.',
-    inputPlaceholder: 'Ask Suna to...',
+    title: 'Q, the AI Employee.',
+      description:
+    'Q by Quriosity – is a generalist AI Agent that acts on your behalf.',
+  inputPlaceholder: 'Ask Q to...',
   },
   cloudPricingItems: [
     {
@@ -127,7 +127,7 @@ export const siteConfig = {
       features: [
         '2 hours',
         'Private projects',
-        'Access to intelligent Model (Full Suna)',
+        'Access to intelligent Model (Full Q)',
       ],
       stripePriceId: config.SUBSCRIPTION_TIERS.TIER_2_20.priceId,
       upgradePlans: [],
@@ -808,7 +808,7 @@ export const siteConfig = {
           'Community support',
         ],
         description: 'Perfect for individual users and developers',
-        buttonText: 'Hire Suna',
+        buttonText: 'Hire Q',
         buttonColor: 'bg-accent text-primary',
         isPopular: false,
       },
