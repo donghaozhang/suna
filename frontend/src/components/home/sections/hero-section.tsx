@@ -209,12 +209,12 @@ export function HeroSection() {
     <section id="hero" className="w-full relative overflow-hidden">
       <div className="relative flex flex-col items-center w-full px-6">
         {/* Full width background grid */}
-        <div className="absolute inset-0 h-[600px] md:h-[800px] -z-10 overflow-hidden">
+        <div className="absolute inset-0 h-[550px] md:h-[700px] -z-10 overflow-hidden">
           {/* Vertical fade from top */}
           <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-background via-background/90 to-transparent z-10" />
 
           {/* Vertical fade to bottom */}
-          <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background via-background/90 to-transparent z-10" />
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background via-background/60 to-transparent z-10" />
 
           {/* Center gradient overlay for content area */}
           <div className="absolute inset-x-1/4 inset-y-0 bg-gradient-to-r from-background/30 via-background/60 to-background/30 z-10" />
@@ -230,7 +230,7 @@ export function HeroSection() {
         </div>
 
         {/* Center content background with rounded bottom */}
-        <div className="absolute inset-x-0 top-0 h-[600px] md:h-[800px] -z-20 bg-background rounded-b-xl"></div>
+        <div className="absolute inset-x-0 top-0 h-[550px] md:h-[700px] -z-20 bg-background rounded-b-xl"></div>
 
         <div className="relative z-10 pt-32 max-w-3xl mx-auto h-full w-full flex flex-col gap-10 items-center justify-center">
           {/* <p className="border border-border bg-accent rounded-full text-sm h-8 px-3 flex items-center gap-2">

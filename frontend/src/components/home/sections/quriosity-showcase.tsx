@@ -80,7 +80,7 @@ export function QuriositShowcase() {
   return (
     <section
       id="showcases"
-      className="flex flex-col items-center justify-center w-full relative py-10"
+      className="flex flex-col items-center justify-center w-full relative py-2 -mt-8"
     >
       {/* Subtle background without grid lines */}
       <div className="absolute inset-0 -z-10 overflow-hidden">

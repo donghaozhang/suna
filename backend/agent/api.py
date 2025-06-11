@@ -40,6 +40,7 @@ class AgentStartRequest(BaseModel):
     stream: Optional[bool] = True
     enable_context_manager: Optional[bool] = False
     agent_id: Optional[str] = None  # Custom agent to use
+    media_model: Optional[str] = None  # Selected media model for image/video generation
 
 class InitiateAgentResponse(BaseModel):
     thread_id: str
@@ -473,7 +474,8 @@ async def start_agent(
         stream=body.stream, enable_context_manager=body.enable_context_manager,
         agent_config=agent_config,  # Pass agent configuration
         is_agent_builder=is_agent_builder,
-        target_agent_id=target_agent_id
+        target_agent_id=target_agent_id,
+        media_model=body.media_model
     )
 
     return {"agent_run_id": agent_run_id, "status": "running"}
@@ -826,6 +828,7 @@ async def initiate_agent_with_files(
     stream: Optional[bool] = Form(True),
     enable_context_manager: Optional[bool] = Form(False),
     agent_id: Optional[str] = Form(None),  # Add agent_id parameter
+    media_model: Optional[str] = Form(None),  # Selected media model for image/video generation
     files: List[UploadFile] = File(default=[]),
     is_agent_builder: Optional[bool] = Form(False),
     target_agent_id: Optional[str] = Form(None),
@@ -1050,7 +1053,8 @@ async def initiate_agent_with_files(
             stream=stream, enable_context_manager=enable_context_manager,
             agent_config=agent_config,  # Pass agent configuration
             is_agent_builder=is_agent_builder,
-            target_agent_id=target_agent_id
+            target_agent_id=target_agent_id,
+            media_model=media_model
         )
 
         return {"thread_id": thread_id, "agent_run_id": agent_run_id}

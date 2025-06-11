@@ -14,6 +14,7 @@ import { handleFiles } from './file-upload-handler';
 import { MessageInput } from './message-input';
 import { AttachmentGroup } from '../attachment-group';
 import { useModelSelection } from './_use-model-selection';
+import { useMediaModelSelection } from './_use-media-model-selection';
 import { AgentSelector } from './agent-selector';
 import { useFileDelete } from '@/hooks/react-query/files';
 import { useQueryClient } from '@tanstack/react-query';
@@ -26,7 +27,7 @@ export interface ChatInputHandles {
 export interface ChatInputProps {
   onSubmit: (
     message: string,
-    options?: { model_name?: string; enable_thinking?: boolean },
+    options?: { model_name?: string; enable_thinking?: boolean; media_model?: string },
   ) => void;
   placeholder?: string;
   loading?: boolean;
@@ -98,6 +99,11 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
       refreshCustomModels,
     } = useModelSelection();
 
+    const {
+      selectedMediaModel,
+      handleMediaModelChange,
+    } = useMediaModelSelection();
+
     const deleteFileMutation = useFileDelete();
     const queryClient = useQueryClient();
 
@@ -148,6 +154,7 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
       onSubmit(message, {
         model_name: baseModelName,
         enable_thinking: thinkingEnabled,
+        media_model: selectedMediaModel,
       });
 
       if (!isControlled) {
@@ -288,6 +295,9 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
                 subscriptionStatus={subscriptionStatus}
                 canAccessModel={canAccessModel}
                 refreshCustomModels={refreshCustomModels}
+                
+                selectedMediaModel={selectedMediaModel}
+                onMediaModelChange={handleMediaModelChange}
               />
             </CardContent>
           </div>

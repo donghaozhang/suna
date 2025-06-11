@@ -199,4 +199,11 @@ rabbitmq_data
 
 .setup_env.json
 
+# fal.ai testing
+backend/fal_testing/images/fal_generated_*.png
+backend/fal_testing/images/fal_generated_*.jpg
+backend/fal_testing/images/fal_generated_*.jpeg
+backend/fal_testing/images/fal_generated_*.webp
+fal_generated_*.*
+
 backend/.test_token_compression.py

@@ -7,6 +7,7 @@ import { UploadedFile } from './chat-input';
 import { FileUploadHandler } from './file-upload-handler';
 import { VoiceRecorder } from './voice-recorder';
 import { ModelSelector } from './model-selector';
+import { MediaModelSelector } from './media-model-selector';
 import { SubscriptionStatus } from './_use-model-selection';
 import { isLocalMode } from '@/lib/config';
 import { TooltipContent } from '@/components/ui/tooltip';
@@ -41,6 +42,10 @@ interface MessageInputProps {
   subscriptionStatus: SubscriptionStatus;
   canAccessModel: (modelId: string) => boolean;
   refreshCustomModels?: () => void;
+  
+  // Media model props
+  selectedMediaModel: string;
+  onMediaModelChange: (model: string) => void;
 }
 
 export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
@@ -73,6 +78,9 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
       subscriptionStatus,
       canAccessModel,
       refreshCustomModels,
+      
+      selectedMediaModel,
+      onMediaModelChange,
     },
     ref,
   ) => {
@@ -168,6 +176,11 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
             </TooltipProvider>
           }
           <div className='flex items-center gap-2'>
+            <MediaModelSelector
+              selectedModel={selectedMediaModel}
+              onModelChange={onMediaModelChange}
+              disabled={loading || (disabled && !isAgentRunning)}
+            />
             <ModelSelector
               selectedModel={selectedModel}
               onModelChange={onModelChange}

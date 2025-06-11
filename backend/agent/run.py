@@ -30,6 +30,7 @@ from langfuse.client import StatefulTraceClient
 from services.langfuse import langfuse
 from agent.gemini_prompt import get_gemini_system_prompt
 from agent.tools.mcp_tool_wrapper import MCPToolWrapper
+from agent.tools.fal_media_tool import FalMediaTool
 from agentpress.tool import SchemaType
 
 load_dotenv()
@@ -107,6 +108,7 @@ async def run_agent(
         thread_manager.add_tool(MessageTool)
         thread_manager.add_tool(SandboxWebSearchTool, project_id=project_id, thread_manager=thread_manager)
         thread_manager.add_tool(SandboxVisionTool, project_id=project_id, thread_id=thread_id, thread_manager=thread_manager)
+        thread_manager.add_tool(FalMediaTool)
         if config.RAPID_API_KEY:
             thread_manager.add_tool(DataProvidersTool)
     else:
@@ -127,6 +129,8 @@ async def run_agent(
             thread_manager.add_tool(SandboxWebSearchTool, project_id=project_id, thread_manager=thread_manager)
         if enabled_tools.get('sb_vision_tool', {}).get('enabled', False):
             thread_manager.add_tool(SandboxVisionTool, project_id=project_id, thread_id=thread_id, thread_manager=thread_manager)
+        if enabled_tools.get('fal_media_tool', {}).get('enabled', False):
+            thread_manager.add_tool(FalMediaTool)
         if config.RAPID_API_KEY and enabled_tools.get('data_providers_tool', {}).get('enabled', False):
             thread_manager.add_tool(DataProvidersTool)
 
