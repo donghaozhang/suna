@@ -69,24 +69,13 @@ async def test_suna_fal_tool():
         
         print(f"\n📋 Tool result:")
         print(f"   Success: {result.success}")
-        print(f"   Type: {result.type}")
         
         if result.success:
-            # Parse the result data
-            data = result.data
-            print(f"   Images generated: {len(data.get('images', []))}")
-            print(f"   Videos generated: {len(data.get('videos', []))}")
-            
-            if data.get('images'):
-                print(f"\n🖼️  Generated images:")
-                for i, url in enumerate(data['images'], 1):
-                    print(f"     {i}. {url}")
-            
-            if data.get('request_id'):
-                print(f"   Request ID: {data['request_id']}")
-                
+            print(f"   ✅ Image generation successful!")
+            if hasattr(result, 'data') and result.data:
+                print(f"   Result data keys: {list(result.data.keys())}")
         else:
-            print(f"   Error: {result.data}")
+            print(f"   ❌ Error: {getattr(result, 'data', 'Unknown error')}")
     
     except Exception as e:
         print(f"❌ Exception during tool test: {e}")
@@ -98,8 +87,7 @@ async def test_multiple_models_with_tool():
     
     models = [
         "fal-ai/flux/schnell",
-        "fal-ai/flux/dev", 
-        "fal-ai/stable-diffusion-xl"
+        "fal-ai/flux/dev"
     ]
     
     prompt = "A futuristic city skyline at sunset"
@@ -119,10 +107,9 @@ async def test_multiple_models_with_tool():
             )
             
             if result.success:
-                image_count = len(result.data.get('images', []))
-                print(f"   ✅ Success - Generated {image_count} image(s)")
+                print(f"   ✅ Success - Image generated!")
             else:
-                print(f"   ❌ Failed - {result.data}")
+                print(f"   ❌ Failed - {getattr(result, 'data', 'Unknown error')}")
                 
         except Exception as e:
             print(f"   ❌ Exception - {str(e)}")

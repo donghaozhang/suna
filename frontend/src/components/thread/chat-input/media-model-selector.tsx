@@ -41,13 +41,7 @@ const MEDIA_MODELS: MediaModel[] = [
     provider: 'fal.ai',
     description: 'FLUX Schnell - ultra-fast image generation'
   },
-  {
-    id: 'fal-ai/stable-diffusion-xl',
-    label: 'Stable Diffusion XL',
-    type: 'image',
-    provider: 'fal.ai',
-    description: 'Stable Diffusion XL via fal.ai - high-resolution image generation'
-  },
+
   {
     id: 'fal-ai/stable-diffusion-v3-medium',
     label: 'Stable Diffusion 3',

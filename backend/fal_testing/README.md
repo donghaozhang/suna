@@ -120,7 +120,6 @@ The scripts test these fal.ai models:
 
 - `fal-ai/flux/schnell` - Fast generation (recommended for testing)
 - `fal-ai/flux/dev` - High quality
-- `fal-ai/stable-diffusion-xl` - Classic Stable Diffusion
 - `fal-ai/stable-diffusion-v3-medium` - Latest SD3
 - `fal-ai/photorealism` - Photorealistic images
 

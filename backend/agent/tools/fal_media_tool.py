@@ -108,7 +108,6 @@ class FalMediaTool(Tool):
                         "enum": [
                             "fal-ai/flux/dev",
                             "fal-ai/flux/schnell", 
-                            "fal-ai/stable-diffusion-xl",
                             "fal-ai/stable-diffusion-v3-medium",
                             "fal-ai/photorealism",
                             "fal-ai/stable-video-diffusion",

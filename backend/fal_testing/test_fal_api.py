@@ -90,7 +90,6 @@ async def test_multiple_models():
     models_to_test = [
         "fal-ai/flux/schnell",  # Fast
         "fal-ai/flux/dev",      # High quality  
-        "fal-ai/stable-diffusion-xl",  # Classic
     ]
     
     test_prompt = "A cute cat sitting on a windowsill"
