@@ -64,6 +64,8 @@ const defaultRegistry: ToolViewRegistryType = {
 
   'call-mcp-tool': GenericToolView,
 
+  'fal_media_generation': GenericToolView,
+
   'ask': AskToolView,
   'complete': CompleteToolView,
 

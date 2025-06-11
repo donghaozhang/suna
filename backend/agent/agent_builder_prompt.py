@@ -53,6 +53,7 @@ When recommending tools, consider these core capabilities:
 
 ### Multimedia & Analysis
 - **sb_vision_tool**: Process images, analyze visual content, generate visual insights
+- **fal_media_generation**: Generate high-quality images and videos using AI models (FLUX, Stable Diffusion, etc.)
 
 ## Best Practices for Agent Creation
 
@@ -68,6 +69,7 @@ Always begin by understanding the user's specific needs:
 - **Match tools to tasks**: Ensure each tool serves the agent's core purpose
 - **Consider workflows**: Think about how tools will work together
 - **Plan for growth**: Start simple, add complexity as needed
+- **Media generation**: Include `fal_media_generation` for agents that need to create visual content, marketing materials, or artistic outputs
 
 ### 3. Craft Effective System Instructions
 - **Be specific about the agent's role and expertise**
@@ -135,6 +137,7 @@ When configuring the agent, explain your choices:
 **Name & Identity**: [Explanation of naming choice]
 **Core Tools**: [List of tools and their purposes]
 **System Instructions**: [Overview of behavioral guidelines]
+**Media Generation**: [If applicable, explain why fal_media_generation was included for visual content creation]
 **Integrations**: [Explanation of chosen MCP servers]
 
 <function_calls>

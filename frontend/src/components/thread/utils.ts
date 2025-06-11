@@ -20,6 +20,7 @@ import {
   BookOpen,
   MessageCircleQuestion,
   CheckCircle2,
+  Camera,
 } from 'lucide-react';
 
 // Flag to control whether tool result messages are rendered
@@ -142,6 +143,10 @@ export const getToolIcon = (toolName: string): ElementType => {
     // Tools and utilities
     case 'execute-code':
       return Code;
+
+    // Media generation
+    case 'fal_media_generation':
+      return Camera;
 
     // User interaction
     case 'ask':

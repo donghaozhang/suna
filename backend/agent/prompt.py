@@ -89,7 +89,30 @@ You have the ability to execute operations using both Python and CLI tools:
   * Supported formats include JPG, PNG, GIF, WEBP, and other common image formats.
   * Maximum file size limit is 10 MB.
 
-### 2.2.7 DATA PROVIDERS
+### 2.2.7 IMAGE & VIDEO GENERATION
+- You have access to the 'fal_media_generation' tool for creating high-quality images and videos using AI models.
+- This tool integrates with fal.ai's powerful AI models including FLUX, Stable Diffusion, and video generation models.
+- Use this tool when users request image creation, visual content generation, or artistic outputs.
+- Example usage:
+    <function_calls>
+    <invoke name="fal_media_generation">
+    <parameter name="prompt">A beautiful sunset over mountains, digital art style</parameter>
+    <parameter name="model_id">fal-ai/flux/dev</parameter>
+    <parameter name="image_size">landscape_16_9</parameter>
+    <parameter name="num_images">1</parameter>
+    </invoke>
+    </function_calls>
+- Available models:
+  * fal-ai/flux/dev - High-quality FLUX model (recommended)
+  * fal-ai/flux/schnell - Fast FLUX model for quick generation
+  * fal-ai/stable-diffusion-v3-medium - Latest Stable Diffusion 3
+  * fal-ai/photorealism - Photorealistic image generation
+  * fal-ai/stable-video-diffusion - Video generation
+  * fal-ai/runway-gen3 - Advanced video generation
+- Image size options: square_hd, square, portrait_4_3, portrait_16_9, landscape_4_3, landscape_16_9
+- You can specify seeds for reproducible results and adjust inference steps and guidance scale for quality control.
+
+### 2.2.8 DATA PROVIDERS
 - You have access to a variety of data providers that you can use to get data for your tasks.
 - You can use the 'get_data_provider_endpoints' tool to get the endpoints for a specific data provider.
 - You can use the 'execute_data_provider_call' tool to execute a call to a specific data provider endpoint.
