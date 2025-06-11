@@ -53,7 +53,7 @@ const showcaseAgents = [
     description: 'A mesmerizing animation of AI-generated poker cards, inspired by the Black Myth: Wukong art style.',
     icon: <PaintBucket className="w-5 h-5" />,
     buttonText: 'View Gallery',
-    color: 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 ring-2 ring-amber-300 dark:ring-amber-600',
+    color: 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800',
     iconColor: 'bg-amber-100 dark:bg-amber-900 text-amber-600 dark:text-amber-400',
     url: '#',
     featured: true,
@@ -82,44 +82,12 @@ export function QuriositShowcase() {
       id="showcases"
       className="flex flex-col items-center justify-center w-full relative py-10"
     >
-      {/* Left background grid */}
-      <div className="absolute left-0 top-0 h-full w-1/3 -z-10 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-background z-10" />
+      {/* Subtle background without grid lines */}
+      <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-background via-background/90 to-transparent z-10" />
         <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background via-background/90 to-transparent z-10" />
-        
-        {mounted && (
-          <FlickeringGrid
-            className="h-full w-full"
-            squareSize={2.5}
-            gridGap={2.5}
-            color="var(--secondary)"
-            maxOpacity={0.3}
-            flickerChance={0.02}
-          />
-        )}
+        <div className="absolute inset-0 bg-gradient-to-r from-background/10 via-background/5 to-background/10 z-5" />
       </div>
-
-      {/* Right background grid */}
-      <div className="absolute right-0 top-0 h-full w-1/3 -z-10 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-background z-10" />
-        <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-background via-background/90 to-transparent z-10" />
-        <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background via-background/90 to-transparent z-10" />
-        
-        {mounted && (
-          <FlickeringGrid
-            className="h-full w-full"
-            squareSize={2.5}
-            gridGap={2.5}
-            color="var(--secondary)"
-            maxOpacity={0.3}
-            flickerChance={0.02}
-          />
-        )}
-      </div>
-
-      {/* Center background */}
-      <div className="absolute inset-x-1/4 top-0 h-full -z-20 bg-background rounded-b-xl" />
 
       <div className="w-full max-w-6xl mx-auto px-6 relative z-10">
         <SectionHeader>
@@ -137,7 +105,7 @@ export function QuriositShowcase() {
           {showcaseAgents.map((agent) => (
             <div
               key={agent.id}
-              className={`rounded-xl p-6 border transition-all duration-200 hover:scale-105 hover:shadow-lg ${agent.color} ${agent.featured ? 'transform scale-105' : ''}`}
+              className={`rounded-xl p-6 border transition-all duration-200 hover:scale-105 hover:shadow-lg ${agent.color}`}
             >
               <div className="flex flex-col gap-4">
                 <div className="flex items-center gap-3">

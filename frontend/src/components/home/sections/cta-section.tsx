@@ -58,7 +58,7 @@ export function CTASection() {
       {/* Center background */}
       <div className="absolute inset-x-1/4 top-0 h-full -z-20 bg-background rounded-b-xl" />
       <div className="w-full max-w-6xl mx-auto px-6">
-        <div className="h-[400px] md:h-[400px] overflow-hidden shadow-xl w-full border border-border rounded-xl bg-sky-400 relative z-20">
+        <div className="h-[400px] md:h-[400px] overflow-hidden shadow-xl w-full border border-border rounded-xl bg-secondary/10 relative z-20">
           {/* <Image
             src={ctaSection.backgroundImage}
             alt="Agent CTA Background"
@@ -67,17 +67,17 @@ export function CTASection() {
             priority
           /> */}
           <div className="absolute inset-0 -top-32 md:-top-40 flex flex-col items-center justify-center">
-            <h1 className="text-white text-4xl md:text-7xl font-medium tracking-tighter max-w-xs md:max-w-xl text-center">
+            <h1 className="text-black dark:text-white text-4xl md:text-7xl font-medium tracking-tighter max-w-xs md:max-w-xl text-center">
               {ctaSection.title}
             </h1>
             <div className="absolute bottom-10 flex flex-col items-center justify-center gap-2">
               <Link
                 href={ctaSection.button.href}
-                className="bg-white text-black font-semibold text-sm h-10 w-fit px-4 rounded-full flex items-center justify-center shadow-md"
+                className="bg-white dark:bg-black text-black dark:text-white font-semibold text-sm h-10 w-fit px-4 rounded-full flex items-center justify-center shadow-md"
               >
                 {ctaSection.button.text}
               </Link>
-              <span className="text-white text-sm">{ctaSection.subtext}</span>
+              <span className="text-black dark:text-white text-sm">{ctaSection.subtext}</span>
             </div>
           </div>
         </div>

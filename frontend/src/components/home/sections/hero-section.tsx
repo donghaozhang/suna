@@ -208,37 +208,16 @@ export function HeroSection() {
   return (
     <section id="hero" className="w-full relative overflow-hidden">
       <div className="relative flex flex-col items-center w-full px-6">
-        {/* Left side flickering grid with gradient fades */}
-        <div className="absolute left-0 top-0 h-[600px] md:h-[800px] w-1/3 -z-10 overflow-hidden">
-          {/* Horizontal fade from left to right */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-background z-10" />
-
+        {/* Full width background grid */}
+        <div className="absolute inset-0 h-[600px] md:h-[800px] -z-10 overflow-hidden">
           {/* Vertical fade from top */}
           <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-background via-background/90 to-transparent z-10" />
 
           {/* Vertical fade to bottom */}
           <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background via-background/90 to-transparent z-10" />
 
-          <FlickeringGrid
-            className="h-full w-full"
-            squareSize={mounted && tablet ? 2 : 2.5}
-            gridGap={mounted && tablet ? 2 : 2.5}
-            color="var(--secondary)"
-            maxOpacity={0.4}
-            flickerChance={isScrolling ? 0.01 : 0.03} // Low flickering when not scrolling
-          />
-        </div>
-
-        {/* Right side flickering grid with gradient fades */}
-        <div className="absolute right-0 top-0 h-[600px] md:h-[800px] w-1/3 -z-10 overflow-hidden">
-          {/* Horizontal fade from right to left */}
-          <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-background z-10" />
-
-          {/* Vertical fade from top */}
-          <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-background via-background/90 to-transparent z-10" />
-
-          {/* Vertical fade to bottom */}
-          <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background via-background/90 to-transparent z-10" />
+          {/* Center gradient overlay for content area */}
+          <div className="absolute inset-x-1/4 inset-y-0 bg-gradient-to-r from-background/30 via-background/60 to-background/30 z-10" />
 
           <FlickeringGrid
             className="h-full w-full"
@@ -251,7 +230,7 @@ export function HeroSection() {
         </div>
 
         {/* Center content background with rounded bottom */}
-        <div className="absolute inset-x-1/4 top-0 h-[600px] md:h-[800px] -z-20 bg-background rounded-b-xl"></div>
+        <div className="absolute inset-x-0 top-0 h-[600px] md:h-[800px] -z-20 bg-background rounded-b-xl"></div>
 
         <div className="relative z-10 pt-32 max-w-3xl mx-auto h-full w-full flex flex-col gap-10 items-center justify-center">
           {/* <p className="border border-border bg-accent rounded-full text-sm h-8 px-3 flex items-center gap-2">
