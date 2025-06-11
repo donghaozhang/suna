@@ -49,112 +49,158 @@ python setup.py
 python start.py
 ```
 
-### Manual Development Setup
+### Fast Development Workflow
+For faster frontend development (avoid Docker rebuilds):
 
-#### Prerequisites
-1. **Python 3.11+** - Backend runtime
-2. **Node.js 18+** - Frontend runtime  
-3. **Poetry** - Python dependency management
-4. **Supabase CLI** - Database management
-5. **Docker** - Container runtime (optional for local dev)
+```bash
+# Keep backend in Docker (use space, not hyphen)
+docker compose up backend redis rabbitmq worker
 
-#### Environment Configuration
+# Run frontend locally for instant hot reload
+cd frontend
+npm install
+npm run dev  # Starts on localhost:3000
+```
 
-##### Backend Environment ([backend/.env](mdc:backend/.env))
+Benefits:
+- ⚡ **Instant hot reload** - changes appear immediately
+- 🔧 **No rebuilds** needed  
+- 🐛 **Better debugging** with browser dev tools
+
+### Docker Commands (Modern Syntax)
+```bash
+# Use "docker compose" (space) not "docker-compose" (hyphen)
+docker compose up
+docker compose ps
+docker compose restart frontend
+docker compose down
+docker compose build --no-cache frontend
+
+# Clear cache when needed
+docker system prune -a -f
+```
+
+## Environment Configuration
+
+### Backend Environment (backend/.env)
 ```env
 # Database
 SUPABASE_URL=your_supabase_url
 SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
-# Redis (for caching and session management)
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_PASSWORD=
-REDIS_SSL=false
-
 # LLM Providers
 ANTHROPIC_API_KEY=your_anthropic_key
 OPENAI_API_KEY=your_openai_key
 
-# Search & Web Services (optional)
+# Optional Services
 TAVILY_API_KEY=your_tavily_key
 FIRECRAWL_API_KEY=your_firecrawl_key
-RAPID_API_KEY=your_rapidapi_key
-
-# Sandbox Environment
-SANDBOX_BASE_URL=http://localhost:8001
-SANDBOX_API_KEY=your_sandbox_key
-
-# Monitoring & Analytics
-SENTRY_DSN=your_sentry_dsn
-LANGFUSE_PUBLIC_KEY=your_langfuse_key
-LANGFUSE_SECRET_KEY=your_langfuse_secret
 ```
 
-##### Frontend Environment ([frontend/.env.local](mdc:frontend/.env.local))
+### Frontend Environment (frontend/.env.local)
 ```env
-# Supabase
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-
-# API
 NEXT_PUBLIC_BACKEND_URL=http://localhost:8000/api
 NEXT_PUBLIC_URL=http://localhost:3000
-
-# Features
-NEXT_PUBLIC_ENABLE_MARKETPLACE=true
-NEXT_PUBLIC_ENABLE_AGENTS=true
-NEXT_PUBLIC_ENABLE_MCP=true
-
-# Analytics
-NEXT_PUBLIC_SENTRY_DSN=your_sentry_dsn
 ```
 
-#### Development Commands
+## Quriosity Branding System
 
-##### Backend Development
+### Updated Site Configuration
+- **Site Name**: "Quriosity" (not "Kortix Suna")
+- **Product Name**: "Q" (not "Suna") 
+- **Repository Display**: "Quriosity/Q"
+- **Footer Links**: Point to https://quriosity.com.au/
+
+### Logo Assets (Three-Logo System)
+- `kortix-symbol.svg` - Blue Quriosity "Q" symbol (32x32px default)
+- `kortix-logo.svg` - Horizontal logo for light mode  
+- `kortix-logo-white.svg` - Horizontal logo for dark mode
+
+### Logo Component Usage
+```typescript
+// Standard usage with proper alt text
+<KortixLogo size={32} />  // Default sidebar size
+<KortixLogo size={16} />  // Chat avatar
+<KortixLogo />            // Uses 32px default
+
+// All logos use alt="Quriosity" or alt="Quriosity Logo"
+```
+
+## Recent UI/UX Improvements
+
+### FlickeringGrid and Border Removals
+- **Removed FlickeringGrid vertical lines** from home sections
+- **Removed horizontal borders** between sections for seamless flow
+- **Unified backgrounds** with full-width coverage instead of segmented grids
+- **Clean gradients** replace complex grid patterns
+
+### Dark Mode Support
+```typescript
+// Proper dark mode text classes
+text-black dark:text-white
+bg-white dark:bg-black
+bg-secondary/10  // Subtle backgrounds instead of bright colors
+```
+
+### Component Updates
+- **Section Headers**: No more `border-b` classes
+- **CTA Sections**: Use `bg-secondary/10` instead of bright colors
+- **Agent Cards**: Consistent styling without special borders or scaling
+
+## Development Commands
+
+### Backend
 ```bash
 cd backend
-
-# Install dependencies with Poetry
 poetry install
-
-# Start main API server
-poetry run python api.py
-
-# Start sandbox API server
-poetry run python sandbox/api.py
-
-# Start MCP local server
-poetry run python mcp_local/api.py
-
-# Run background agent processor
-poetry run python run_agent_background.py
-
-# Apply database migrations
-supabase db push
+poetry run python api.py           # Main API
+poetry run python sandbox/api.py   # Sandbox
+poetry run python mcp_local/api.py # MCP server
 ```
 
-##### Frontend Development
+### Frontend
 ```bash
 cd frontend
-
-# Install dependencies
 npm install
-
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Type checking
-npm run type-check
-
-# Code formatting
-npm run format
+npm run dev      # Development server
+npm run build    # Production build
+npm run format   # Code formatting
 ```
+
+### Database
+```bash
+supabase db push    # Apply migrations
+supabase db reset   # Reset local database
+```
+
+## Git Workflow
+```bash
+git add .
+git commit -m "feat: description of changes"
+git push
+```
+
+## File Organization
+
+### Backend Structure
+- `backend/api.py` - Main FastAPI application
+- `backend/agent/` - Agent system and tools
+- `backend/services/` - Business logic services
+- `backend/sandbox/` - Execution environment
+
+### Frontend Structure  
+- `frontend/src/app/` - Next.js App Router pages
+- `frontend/src/components/` - React components
+- `frontend/src/hooks/` - Custom React hooks
+- `frontend/src/lib/` - Utilities and configurations
+
+### Home Page Components
+- `components/home/sections/quriosity-showcase.tsx` - 6 agent demonstrations
+- `components/home/sections/hero-section.tsx` - Main hero section
+- `components/home/sections/footer-section.tsx` - Footer with Quriosity links
 
 ## Project Structure Conventions
 

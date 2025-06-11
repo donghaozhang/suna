@@ -195,6 +195,22 @@ Suna is an open-source AI agent platform built by Quriosity with a modern, scala
 - **Secret Management**: Environment-based configuration
 - **Network Security**: Controlled container networking
 
+## Recent UI/UX Improvements
+
+### Homepage Design Updates
+- **Removed FlickeringGrid vertical lines** - Replaced with clean gradients
+- **Eliminated horizontal borders** between sections for seamless flow
+- **Unified backgrounds** - Full-width coverage instead of segmented grids
+- **Subtle color palette** - Uses `bg-secondary/10` instead of bright colors
+- **Consistent agent cards** - No special borders or scaling effects
+- **Dark mode optimization** - Proper text contrast and theme support
+
+### Quriosity Showcase Section
+- 6 agent demonstration cards (Game, Design, Brand, Web, Art, Clone)
+- Color-coded cards with interactive hover effects
+- Positioned between Hero and Use Cases sections
+- Located in `components/home/sections/quriosity-showcase.tsx`
+
 ## External Integrations
 
 - **LLM Providers**: Anthropic, OpenAI, Groq (via LiteLLM)
