@@ -13,13 +13,13 @@ import re
 import uuid
 import asyncio
 from datetime import datetime, timezone
-from typing import List, Dict, Any, Optional, AsyncGenerator, Tuple, Union, Callable, Literal
+from typing import List, Dict, Any, Optional, AsyncGenerator, Tuple, Union, Callable, Literal, Any
 from dataclasses import dataclass
 from utils.logger import logger
 from agentpress.tool import ToolResult
 from agentpress.tool_registry import ToolRegistry
 from agentpress.xml_tool_parser import XMLToolParser
-from langfuse.client import StatefulTraceClient
+from langfuse import Langfuse
 from services.langfuse import langfuse
 from agentpress.utils.json_helpers import (
     ensure_dict, ensure_list, safe_json_parse, 
@@ -86,7 +86,7 @@ class ProcessorConfig:
 class ResponseProcessor:
     """Processes LLM responses, extracting and executing tool calls."""
     
-    def __init__(self, tool_registry: ToolRegistry, add_message_callback: Callable, trace: Optional[StatefulTraceClient] = None, is_agent_builder: bool = False, target_agent_id: Optional[str] = None):
+    def __init__(self, tool_registry: ToolRegistry, add_message_callback: Callable, trace: Optional[Any] = None, is_agent_builder: bool = False, target_agent_id: Optional[str] = None):
         """Initialize the ResponseProcessor.
         
         Args:

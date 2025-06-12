@@ -224,6 +224,14 @@ git push
 - **[frontend/src/providers/](mdc:frontend/src/providers)** - Context providers
 - **[frontend/src/contexts/](mdc:frontend/src/contexts)** - React contexts
 
+## Agent Tool Configuration
+
+### Fal Media Tool (Image Generation)
+- **Enabled by Default**: The `FalMediaTool` for image and video generation is now enabled by default for all agents, including custom ones.
+- **File Location**: The logic for this is in `backend/agent/run.py`.
+- **Behavior**: Previously, this tool was only active for the default "Suna" agent. The code has been changed so that any agent created will have access to the `fal_media_generation` function, unless the tool is explicitly disabled in the agent's configuration.
+- **Requirement**: The `FAL_KEY` environment variable must be set in the `backend/.env` file for the tool to function.
+
 ## Branding & Logo Assets
 
 ### Quriosity Branding System

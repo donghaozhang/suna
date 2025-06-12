@@ -21,7 +21,7 @@ load_dotenv('../.env')
 sys.path.insert(0, '..')
 
 try:
-    from agent.tools.fal_media_tool import FalMediaTool
+    from agent.tools.fal_media_tool import FalMediaToolClass
 except ImportError as e:
     print(f"❌ Cannot import Suna's fal media tool: {e}")
     print("Make sure you're running this from backend/fal_testing directory")
@@ -46,8 +46,8 @@ async def test_suna_fal_tool():
     
     print(f"✅ API Key found: {api_key[:8]}...")
     
-    # Create tool instance
-    tool = FalMediaTool()
+    # Create tool instance (requires project_id for sandbox access)
+    tool = FalMediaToolClass(project_id="test_project")
     
     # Test parameters
     prompt = "An underwater Sanxingdui civilization ruins with prehistoric elements and massive mask architecture in an abyssal setting"
@@ -91,7 +91,7 @@ async def test_multiple_models_with_tool():
     ]
     
     prompt = "A futuristic city skyline at sunset"
-    tool = FalMediaTool()
+    tool = FalMediaToolClass(project_id="test_project")
     
     print(f"\n🔄 Testing multiple models with Suna tool:")
     

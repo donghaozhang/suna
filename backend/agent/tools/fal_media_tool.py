@@ -7,11 +7,15 @@ Based on the fal.ai Python client documentation: https://docs.fal.ai/clients/pyt
 
 import asyncio
 import os
+import aiohttp
+from datetime import datetime
 from typing import Dict, Any, List, Optional
 import fal_client
 from pydantic import BaseModel, Field
 
-from agentpress.tool import Tool, ToolResult, openapi_schema
+from agentpress.tool import ToolResult, openapi_schema
+from sandbox.tool_base import SandboxToolsBase
+from utils.logger import logger
 
 
 class FalMediaRequest(BaseModel):
@@ -32,13 +36,15 @@ class FalMediaResponse(BaseModel):
     videos: List[str] = Field(default_factory=list, description="URLs of generated videos")
     error: Optional[str] = Field(default=None, description="Error message if generation failed")
     request_id: Optional[str] = Field(default=None, description="fal.ai request ID for tracking")
+    saved_files: List[str] = Field(default_factory=list, description="Paths to saved files in workspace")
 
 
-class FalMediaTool(Tool):
+class FalMediaTool(SandboxToolsBase):
     """Tool for generating images and videos using fal.ai"""
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, project_id: str, thread_id: str, thread_manager=None):
+        super().__init__(project_id, thread_manager)
+        self.thread_id = thread_id
 
     def _is_video_model(self, model_id: str) -> bool:
         """Check if the model generates videos"""
@@ -90,11 +96,52 @@ class FalMediaTool(Tool):
             except Exception as fallback_error:
                 raise Exception(f"Both subscribe and run failed. Subscribe error: {str(e)}, Run error: {str(fallback_error)}")
 
+    async def _download_and_save_image(self, image_url: str, prompt: str, model_id: str, seed: Optional[int] = None) -> str:
+        """Download an image from URL and save it to the workspace"""
+        try:
+            logger.info(f"Ensuring sandbox is available for image saving...")
+            # Ensure sandbox is initialized
+            await self._ensure_sandbox()
+            logger.info(f"Sandbox available (ID: {self.sandbox_id}). Proceeding with image download.")
+            
+            # Create images directory if it doesn't exist
+            images_dir = f"{self.workspace_path}/generated_images"
+            self.sandbox.fs.create_folder(images_dir, "755")
+            
+            # Generate filename with timestamp and model info
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            model_name = model_id.split('/')[-1] if '/' in model_id else model_id
+            seed_suffix = f"_seed{seed}" if seed is not None else ""
+            filename = f"{timestamp}_{model_name}{seed_suffix}.png"
+            file_path = f"{images_dir}/{filename}"
+            
+            # Download the image
+            logger.info(f"Downloading image from {image_url} to {file_path}")
+            async with aiohttp.ClientSession() as session:
+                async with session.get(image_url) as response:
+                    if response.status == 200:
+                        image_data = await response.read()
+                        
+                        # Save to workspace
+                        self.sandbox.fs.upload_file(file_path, image_data)
+                        
+                        # Return relative path for display
+                        relative_path = f"generated_images/{filename}"
+                        logger.info(f"✅ Image saved to workspace: {relative_path}")
+                        return relative_path
+                    else:
+                        logger.error(f"Failed to download image: HTTP {response.status}")
+                        raise Exception(f"Failed to download image: HTTP {response.status}")
+                        
+        except Exception as e:
+            logger.error(f"❌ Error in _download_and_save_image: {str(e)}", exc_info=True)
+            raise e
+
     @openapi_schema({
         "type": "function",
         "function": {
             "name": "fal_media_generation",
-            "description": "Generate images and videos using fal.ai's powerful AI models including FLUX, Stable Diffusion, and video generation models.",
+            "description": "Generate images and videos using fal.ai's powerful AI models including FLUX, Stable Diffusion, and video generation models. Generated images are automatically downloaded and saved to the workspace for viewing in chat history.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -152,7 +199,7 @@ class FalMediaTool(Tool):
         num_inference_steps: Optional[int] = None,
         guidance_scale: Optional[float] = None
     ) -> ToolResult:
-        """Generate media using fal.ai"""
+        """Generate media using fal.ai and save to workspace"""
         
         # Check if fal.ai API key is configured
         if not os.getenv("FAL_KEY"):
@@ -188,6 +235,7 @@ class FalMediaTool(Tool):
                 "success": True,
                 "images": [],
                 "videos": [],
+                "saved_files": [],
                 "request_id": result.get("request_id")
             }
             
@@ -201,22 +249,64 @@ class FalMediaTool(Tool):
                 elif "videos" in result:
                     response_data["videos"] = [video["url"] if isinstance(video, dict) else video for video in result["videos"]]
             else:
-                # Handle image response
+                # Handle image response and download/save images
                 if "images" in result:
-                    response_data["images"] = [img["url"] if isinstance(img, dict) else img for img in result["images"]]
-                elif "image" in result:
-                    if isinstance(result["image"], str):
-                        response_data["images"] = [result["image"]]
-                    elif isinstance(result["image"], dict) and "url" in result["image"]:
-                        response_data["images"] = [result["image"]["url"]]
+                    response_data["images"] = [img["url"] for img in result["images"]]
+                    
+                    # Download and save images
+                    logger.info("Starting image download and save process...")
+                    saved_files = []
+                    download_errors = []
+                    for i, image_url in enumerate(response_data["images"]):
+                        try:
+                            logger.info(f"Processing image {i+1} at URL: {image_url}")
+                            saved_path = await self._download_and_save_image(image_url, prompt, request.model_id, seed)
+                            saved_files.append(saved_path)
+                        except Exception as e:
+                            error_message = f"Failed to save image {i+1} from {image_url}: {str(e)}"
+                            logger.error(error_message, exc_info=True)
+                            download_errors.append(error_message)
+                    
+                    response_data["saved_files"] = saved_files
+                    logger.info(f"Completed image download process. Saved {len(saved_files)} files.")
 
+                    if download_errors:
+                        # If some images failed to download, add error details to the response
+                        error_summary = "\n".join(download_errors)
+                        response_data['error'] = f"Could not save all generated images to the workspace. The following errors occurred:\n{error_summary}"
+
+            # Create success message
+            success_message_parts = []
+            if response_data.get("images"):
+                success_message_parts.append(f"Successfully generated {len(response_data['images'])} image(s).")
+            
+            if response_data["saved_files"]:
+                files_list = "\n".join([f"- {path}" for path in response_data["saved_files"]])
+                success_message_parts.append(f"Saved {len(response_data['saved_files'])} to your workspace:\n{files_list}")
+                success_message_parts.append("The images are now available in your workspace files and will be displayed in the chat history.")
+
+            if response_data.get("error"):
+                 success_message_parts.append(f"\nHowever, some images could not be saved:\n{response_data['error']}")
+                 if not response_data["saved_files"]:
+                     success_message_parts.append(f"You can try to access them at these temporary URLs: {response_data.get('images', [])}")
+
+            if response_data.get("videos"):
+                success_message_parts.append(f"Successfully generated video. URL: {response_data.get('videos', [])}")
+
+            if not success_message_parts:
+                success_message = "Media generation completed, but no files were produced or saved."
+            else:
+                success_message = "\n\n".join(success_message_parts)
+
+
+            # Include the success message in the response data
+            response_data["message"] = success_message
             return self.success_response(response_data)
 
         except Exception as e:
+            logger.error(f"Failed to generate media with {model_id}: {str(e)}", exc_info=True)
             return self.fail_response(f"Failed to generate media with {model_id}: {str(e)}")
 
 
-
-
-# Export the tool instance
-fal_media_tool = FalMediaTool() 
+# Export the tool class (not instance, since it needs project_id)
+FalMediaToolClass = FalMediaTool 

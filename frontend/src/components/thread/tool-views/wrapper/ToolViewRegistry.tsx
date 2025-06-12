@@ -16,6 +16,7 @@ import { CompleteToolView } from '../CompleteToolView';
 import { ExecuteDataProviderCallToolView } from '../data-provider-tool/ExecuteDataProviderCallToolView';
 import { DataProviderEndpointsToolView } from '../data-provider-tool/DataProviderEndpointsToolView';
 import { DeployToolView } from '../DeployToolView';
+import { FalMediaToolView } from '../fal-media-tool/FalMediaToolView';
 
 
 export type ToolViewComponent = React.ComponentType<ToolViewProps>;
@@ -64,7 +65,7 @@ const defaultRegistry: ToolViewRegistryType = {
 
   'call-mcp-tool': GenericToolView,
 
-  'fal_media_generation': GenericToolView,
+  'fal_media_generation': FalMediaToolView,
 
   'ask': AskToolView,
   'complete': CompleteToolView,
