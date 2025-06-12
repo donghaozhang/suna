@@ -2,8 +2,8 @@ import asyncio
 import sys
 import os
 
-# Add the backend directory to the path
-sys.path.append('/app')
+# Add the backend directory to the path (go up one level from tests/)
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from agent.tools.fal_media_tool import FalMediaToolClass
 from agentpress.thread_manager import ThreadManager

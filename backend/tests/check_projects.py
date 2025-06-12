@@ -1,6 +1,9 @@
 import asyncio
 import sys
-sys.path.append('/app')
+import os
+
+# Add the backend directory to the path (go up one level from tests/)
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from services.supabase import DBConnection
 
