@@ -41,6 +41,36 @@ alwaysApply: false
 - Information retrieval and synthesis
 - Search result ranking and filtering
 
+### Media Generation & AI Content Creation
+**Tool**: `fal_media_tool.py`
+- **Image Generation**: High-quality image creation using FLUX models
+- **Video Generation**: AI-powered video content creation
+- **Model Support**: Multiple AI models (FLUX/dev, FLUX/schnell, etc.)
+- **Enhanced Error Handling**: Comprehensive error reporting and fallback mechanisms
+- **Workspace Integration**: Automatic image saving to project workspace
+- **Fallback URLs**: Temporary access URLs when workspace saving fails
+- **Format Support**: Multiple output formats (PNG, JPG, MP4, etc.)
+
+**Key Features**:
+- Detailed error messages for troubleshooting
+- Graceful degradation when sandbox connectivity issues occur
+- Clear user feedback about generation success/failure
+- Automatic file naming with timestamps
+- Support for various aspect ratios and quality settings
+
+**Usage Examples**:
+```python
+# Generate image with specific parameters
+fal_media_generation(
+    prompt="A beautiful landscape at sunset",
+    model="fal-ai/flux/dev",
+    image_size="landscape_4_3",
+    num_inference_steps=28
+)
+```
+
+**Error Handling**: The tool now provides detailed error messages when image saving fails, explaining the issue and providing temporary URLs as fallback options.
+
 ## External Data Providers
 
 ### TavilyProvider

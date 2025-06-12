@@ -482,3 +482,255 @@ npm run test:watch
 # Run end-to-end tests
 npm run test:e2e
 ```
+
+## Feature Flag Management
+
+### Overview
+The application uses a Redis-based feature flag system to control feature availability. Feature flags allow enabling/disabling functionality without code deployments.
+
+### Available Feature Flags
+- **`custom_agents`**: Controls custom agent creation and management functionality
+- **`agent_marketplace`**: Controls agent marketplace features
+
+### Managing Feature Flags
+
+#### Enable a Feature Flag
+```bash
+# From within Docker container (recommended)
+docker compose exec backend bash -c "cd /app && PYTHONPATH=/app python flags/setup.py enable custom_agents 'Enable custom agent creation'"
+
+# Check flag status
+curl -X GET http://localhost:8000/api/feature-flags/custom_agents
+```
+
+#### Disable a Feature Flag
+```bash
+docker compose exec backend bash -c "cd /app && PYTHONPATH=/app python flags/setup.py disable custom_agents 'Disable custom agents'"
+```
+
+#### List All Feature Flags
+```bash
+docker compose exec backend bash -c "cd /app && PYTHONPATH=/app python flags/setup.py list"
+```
+
+#### Check Flag Status
+```bash
+docker compose exec backend bash -c "cd /app && PYTHONPATH=/app python flags/setup.py status custom_agents"
+```
+
+### Feature Flag CLI Commands
+```bash
+# Enable with description
+python flags/setup.py enable flag_name "Description"
+
+# Disable with description  
+python flags/setup.py disable flag_name "Description"
+
+# Toggle flag state
+python flags/setup.py toggle flag_name "Description"
+
+# Delete flag completely
+python flags/setup.py delete flag_name
+
+# Show detailed status
+python flags/setup.py status flag_name
+
+# List all flags
+python flags/setup.py list
+```
+
+### Frontend Feature Flag Usage
+```typescript
+// Check feature flag in React components
+const { flags, loading } = useFeatureFlags(['custom_agents']);
+const customAgentsEnabled = flags.custom_agents;
+
+// Check feature flag in server components
+const agentPlaygroundEnabled = await isFlagEnabled('custom_agents');
+```
+
+### Backend Feature Flag Usage
+```python
+# Check feature flag in API endpoints
+from flags.flags import is_enabled
+
+if not await is_enabled("custom_agents"):
+    raise HTTPException(status_code=403, detail="Feature not available")
+```
+
+## Troubleshooting
+
+### Common Issues and Solutions
+
+#### "Custom agents is not enabled" Error
+**Problem**: Frontend shows "Custom agents is not enabled" console error.
+
+**Solution**: Enable the custom_agents feature flag:
+```bash
+docker compose exec backend bash -c "cd /app && PYTHONPATH=/app python flags/setup.py enable custom_agents 'Enable custom agent creation'"
+```
+
+**Verification**: Check flag status:
+```bash
+curl -X GET http://localhost:8000/api/feature-flags/custom_agents
+```
+
+#### Image Generation "Failed to Load Image" Error
+**Problem**: Generated images show "Failed to load image" in the UI.
+
+**Root Cause**: The `fal_media_generation` tool fails to save images to workspace due to sandbox connectivity issues, but falls back to temporary URLs that the frontend cannot render due to CORS/CSP restrictions.
+
+**Solution**: The tool now provides enhanced error handling with detailed messages explaining the issue and providing fallback options.
+
+**Prevention**: Ensure proper sandbox connectivity and workspace configuration.
+
+#### Redis Connection Errors
+**Problem**: Feature flag operations fail with Redis connection errors.
+
+**Solution**: 
+1. Ensure Redis container is running: `docker compose ps`
+2. Restart Redis if needed: `docker compose restart redis`
+3. Check Redis logs: `docker compose logs redis`
+
+#### Docker Container Issues
+**Problem**: Services fail to start or behave unexpectedly.
+
+**Solutions**:
+```bash
+# Clear Docker cache and rebuild
+docker compose down
+docker system prune -a -f
+docker compose build --no-cache
+docker compose up -d
+
+# Check container logs
+docker compose logs -f backend
+docker compose logs -f frontend
+
+# Restart specific service
+docker compose restart backend
+```
+
+#### Frontend Build Errors
+**Problem**: Next.js build fails or shows warnings.
+
+**Solutions**:
+```bash
+# Clear Next.js cache
+cd frontend
+rm -rf .next
+npm run build
+
+# Clear node_modules and reinstall
+rm -rf node_modules package-lock.json
+npm install
+
+# Check for TypeScript errors
+npm run type-check
+```
+
+#### Database Migration Issues
+**Problem**: Supabase migrations fail or database is out of sync.
+
+**Solutions**:
+```bash
+# Reset local database
+supabase db reset
+
+# Apply migrations manually
+supabase db push
+
+# Check migration status
+supabase migration list
+```
+
+### Debug Commands
+
+#### Check Service Health
+```bash
+# Check all services
+docker compose ps
+
+# Check specific service logs
+docker compose logs -f backend
+docker compose logs -f frontend
+docker compose logs -f redis
+
+# Check API health
+curl http://localhost:8000/health
+curl http://localhost:3000/api/health
+```
+
+#### Database Debugging
+```bash
+# Connect to local Supabase
+supabase db connect
+
+# Check database status
+supabase status
+
+# View migration history
+supabase migration list
+```
+
+#### Feature Flag Debugging
+```bash
+# List all flags and their status
+docker compose exec backend bash -c "cd /app && PYTHONPATH=/app python flags/setup.py list"
+
+# Check Redis directly
+docker compose exec redis redis-cli keys "feature_flag:*"
+docker compose exec redis redis-cli hgetall "feature_flag:custom_agents"
+```
+
+### Performance Optimization
+
+#### Frontend Performance
+```bash
+# Analyze bundle size
+cd frontend
+npm run analyze
+
+# Check Core Web Vitals
+npm run lighthouse
+
+# Optimize images
+npm run optimize-images
+```
+
+#### Backend Performance
+```bash
+# Check API response times
+curl -w "@curl-format.txt" -o /dev/null -s http://localhost:8000/api/health
+
+# Monitor memory usage
+docker stats
+
+# Check database query performance
+# Use Supabase dashboard for query analysis
+```
+
+### Log Analysis
+
+#### Backend Logs
+```bash
+# View real-time logs
+docker compose logs -f backend
+
+# Search for specific errors
+docker compose logs backend | grep -i error
+
+# View agent execution logs
+docker compose logs backend | grep -i agentpress
+```
+
+#### Frontend Logs
+```bash
+# View Next.js logs
+docker compose logs -f frontend
+
+# Check browser console for client-side errors
+# Open browser dev tools -> Console tab
+```
+
+## Testing Strategy
