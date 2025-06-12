@@ -1,7 +1,7 @@
 ---
-description: 
-globs: 
-alwaysApply: true
+description:
+globs:
+alwaysApply: false
 ---
 # Development Workflow & Setup
 
@@ -18,7 +18,15 @@ suna/
 │   ├── pyproject.toml         # Poetry configuration
 │   ├── poetry.lock            # Locked dependencies
 │   ├── Dockerfile             # Backend container config
-│   └── run_agent_background.py # Background agent runner
+│   ├── run_agent_background.py # Background agent runner
+│   ├── utils/
+│   │   ├── retry.py           # Redis retry utilities
+│   │   └── scripts/           # Maintenance scripts
+│   └── tests/                 # Organized test directory
+│       ├── README.md          # Test documentation
+│       ├── check_projects.py  # Project validation tests
+│       ├── test_fal_tool.py   # FAL media tool tests
+│       └── test_image_generation.py # Image generation tests
 ├── frontend/
 │   ├── .env.example           # Frontend environment template
 │   ├── package.json           # Node.js dependencies
@@ -28,7 +36,9 @@ suna/
 │   ├── tsconfig.json          # TypeScript configuration
 │   ├── Dockerfile             # Frontend container config
 │   ├── .prettierrc            # Code formatting config
-│   └── .prettierignore        # Prettier ignore patterns
+│   ├── .prettierignore        # Prettier ignore patterns
+│   └── src/lib/utils/
+│       └── unicode.ts         # Unicode filename normalization
 └── supabase/
     ├── config.toml            # Supabase project config
     └── migrations/            # Database schema changes
@@ -96,6 +106,7 @@ OPENAI_API_KEY=your_openai_key
 # Optional Services
 TAVILY_API_KEY=your_tavily_key
 FIRECRAWL_API_KEY=your_firecrawl_key
+FAL_KEY=your_fal_key
 ```
 
 ### Frontend Environment (frontend/.env.local)
@@ -129,26 +140,51 @@ NEXT_PUBLIC_URL=http://localhost:3000
 // All logos use alt="Quriosity" or alt="Quriosity Logo"
 ```
 
-## Recent UI/UX Improvements
+## Recent Infrastructure Improvements
 
-### FlickeringGrid and Border Removals
+### Unicode File Handling
+- **New Feature**: Automatic filename normalization for cross-platform compatibility
+- **Location**: `frontend/src/lib/utils/unicode.ts`
+- **Purpose**: Ensures consistent Unicode representation between macOS (NFD) and other systems (NFC)
+
+```typescript
+import { normalizeFilenameToNFC } from '@/lib/utils/unicode';
+
+// Normalize filename before processing
+const normalizedName = normalizeFilenameToNFC(file.name);
+```
+
+### Redis Reliability Improvements
+**Location**: `backend/utils/retry.py`
+
+**Features**:
+- Exponential backoff retry mechanism
+- Configurable retry attempts and delays
+- Type-safe async function wrapper
+
+**Usage**:
+```python
+from backend.utils.retry import retry
+
+async def redis_operation():
+    # Redis operation that might fail
+    return await redis.get("key")
+
+# Retry with custom parameters
+result = await retry(redis_operation, max_attempts=3, delay_seconds=2)
+```
+
+### MCP Server Improvements
+- Enhanced MCP server browsing and configuration
+- Improved agent MCP configuration interface
+- Removed deprecated MCP configuration components
+- Better error handling for MCP server connections
+
+### UI/UX Improvements
 - **Removed FlickeringGrid vertical lines** from home sections
 - **Removed horizontal borders** between sections for seamless flow
 - **Unified backgrounds** with full-width coverage instead of segmented grids
 - **Clean gradients** replace complex grid patterns
-
-### Dark Mode Support
-```typescript
-// Proper dark mode text classes
-text-black dark:text-white
-bg-white dark:bg-black
-bg-secondary/10  // Subtle backgrounds instead of bright colors
-```
-
-### Component Updates
-- **Section Headers**: No more `border-b` classes
-- **CTA Sections**: Use `bg-secondary/10` instead of bright colors
-- **Agent Cards**: Consistent styling without special borders or scaling
 
 ## Development Commands
 
@@ -176,11 +212,18 @@ supabase db push    # Apply migrations
 supabase db reset   # Reset local database
 ```
 
-## Git Workflow
+### Testing
 ```bash
-git add .
-git commit -m "feat: description of changes"
-git push
+# Backend tests (organized in backend/tests/)
+cd backend
+poetry run pytest tests/           # Run all tests
+poetry run pytest tests/test_fal_tool.py  # Specific test
+
+# Frontend tests
+cd frontend
+npm run test                       # Unit tests
+npm run test:watch                 # Watch mode
+npm run test:e2e                   # End-to-end tests
 ```
 
 ## File Organization
@@ -190,39 +233,22 @@ git push
 - `backend/agent/` - Agent system and tools
 - `backend/services/` - Business logic services
 - `backend/sandbox/` - Execution environment
+- `backend/utils/` - Utility functions and scripts
+  - `retry.py` - Redis retry utilities with exponential backoff
+  - `scripts/` - Maintenance and utility scripts
+- `backend/tests/` - Organized test directory with documentation
 
 ### Frontend Structure  
 - `frontend/src/app/` - Next.js App Router pages
 - `frontend/src/components/` - React components
 - `frontend/src/hooks/` - Custom React hooks
 - `frontend/src/lib/` - Utilities and configurations
+- `frontend/src/lib/utils/unicode.ts` - Unicode normalization utilities
 
 ### Home Page Components
 - `components/home/sections/quriosity-showcase.tsx` - 6 agent demonstrations
 - `components/home/sections/hero-section.tsx` - Main hero section
 - `components/home/sections/footer-section.tsx` - Footer with Quriosity links
-
-## Project Structure Conventions
-
-### Backend Organization
-- **[backend/api.py](mdc:backend/api.py)** - Main FastAPI application entry point
-- **[backend/agent/](mdc:backend/agent)** - Agent system components
-  - `api.py` - Agent API endpoints
-  - `run.py` - Agent execution logic
-  - `prompt.py` - System prompts and templates
-  - `tools/` - Tool implementations
-- **[backend/services/](mdc:backend/services)** - Business logic services
-- **[backend/agentpress/](mdc:backend/agentpress)** - Agent framework
-- **[backend/sandbox/](mdc:backend/sandbox)** - Execution environment
-- **[backend/mcp_local/](mdc:backend/mcp_local)** - Model Context Protocol integration
-
-### Frontend Organization
-- **[frontend/src/app/](mdc:frontend/src/app)** - Next.js App Router pages
-- **[frontend/src/components/](mdc:frontend/src/components)** - React components
-- **[frontend/src/hooks/](mdc:frontend/src/hooks)** - Custom React hooks
-- **[frontend/src/lib/](mdc:frontend/src/lib)** - Utilities and configurations
-- **[frontend/src/providers/](mdc:frontend/src/providers)** - Context providers
-- **[frontend/src/contexts/](mdc:frontend/src/contexts)** - React contexts
 
 ## Agent Tool Configuration
 
@@ -232,189 +258,6 @@ git push
 - **Behavior**: Previously, this tool was only active for the default "Suna" agent. The code has been changed so that any agent created will have access to the `fal_media_generation` function, unless the tool is explicitly disabled in the agent's configuration.
 - **Requirement**: The `FAL_KEY` environment variable must be set in the `backend/.env` file for the tool to function.
 
-## Branding & Logo Assets
-
-### Quriosity Branding System
-The application uses **Quriosity** branding with a three-logo system:
-
-**Primary Logo Files:**
-- `kortix-symbol.svg` - Blue Quriosity "Q" symbol (32x32px default)
-- `kortix-logo.svg` - Horizontal Quriosity logo for light mode  
-- `kortix-logo-white.svg` - Horizontal Quriosity logo for dark mode
-
-**Backup Files:**
-- `kortix-symbol-backup.svg` - Original Kortix symbol
-- `kortix-logo-white-backup.svg` - Original Kortix logo
-- `Quriosity Favicon_App Icon.svg` - Source Quriosity design file
-
-### Logo Component Usage
-```typescript
-// Sidebar logo with custom size
-<KortixLogo size={32} />
-
-// Default logo (32px default size)  
-<KortixLogo />
-
-// Chat avatar (smaller)
-<KortixLogo size={16} />
-```
-
-### Logo Implementation Standards
-- **Component**: `frontend/src/components/sidebar/kortix-logo.tsx`
-- **Alt Text**: All logos use `alt="Quriosity"` or `alt="Quriosity Logo"`
-- **Theme Support**: Automatic light/dark mode switching
-- **Default Size**: 32x32px (increased from 24px for better visibility)
-- **Size Variants**: 16px (chat), 24px (compact), 32px (default), 40px+ (headers)
-
-### Branding Rules
-- **Site Name**: "Quriosity" (not "Kortix Suna")
-- **Product Name**: "Q" (not "Suna") 
-- **Company**: "Quriosity" (not "Kortix")
-- **Description**: "Q by Quriosity – is a generalist AI Agent"
-- **Footer Title**: "Quriosity" (not "Kortix")
-- **Repository Display**: "Quriosity/Q" (not "kortix-ai/suna")
-- **External Links**: Point to https://quriosity.com.au/ for most footer links
-- **Cache Clearing**: Run `rm -rf .next` when updating logo components
-
-### Homepage Sections
-- **Quriosity Showcase**: New section with 6 agent cards between Hero and Use Cases
-  - Game Agent, Design Agent, Brand Agent, Web Agent, Art Agent, Clone Agent
-  - Color-coded cards with interactive hover effects
-  - Located in `frontend/src/components/home/sections/quriosity-showcase.tsx`
-
-### Footer Configuration
-- **Location**: `frontend/src/lib/home.tsx` in `footerLinks` array
-- **Updated Links**: Most footer links now point to https://quriosity.com.au/
-- **Exceptions**: 
-  - Contact remains as `mailto:hey@kortix.ai`
-  - GitHub still points to code repository
-- **Sidebar CTA**: "Join Our Team" link points to https://quriosity.com.au/
-
-### Build Error Fixes
-- **HeroVideoSection Removed**: Deleted problematic `hero-video-section.tsx` that contained unauthorized thum.io image service
-- **Import Cleanup**: Removed all imports and usages of `HeroVideoSection` from `hero-section.tsx`
-- **Layout Optimization**: Reduced showcase section padding from `py-20` to `py-10` for better spacing
-
-### FlickeringGrid Background System
-- **Universal Implementation**: All home page sections now use FlickeringGrid backgrounds for visual consistency
-- **Standard Pattern**: Left/right grid panels (1/3 width each) with gradient overlays
-- **Consistent Parameters**: `squareSize={2.5}`, `gridGap={2.5}`, `maxOpacity={0.3}`, `flickerChance={0.02}`
-- **Sections Updated**: 
-  - `use-cases-section.tsx` - Added FlickeringGrid + removed `<hr>` divider
-  - `open-source-section.tsx` - Added FlickeringGrid background
-  - `pricing-section.tsx` - Added FlickeringGrid background
-  - `cta-section.tsx` - Added FlickeringGrid + changed to light blue (`bg-sky-400`)
-  - `quriosity-showcase.tsx` - Already had FlickeringGrid
-  - `hero-section.tsx` - Already had FlickeringGrid
-  - `footer-section.tsx` - Already had FlickeringGrid
-
-### Horizontal Divider Removal
-- **Main Container**: Removed `divide-y divide-border` from `frontend/src/app/(home)/page.tsx`
-- **Section Dividers**: Removed all `<hr>`, `border-t`, `border-b` elements between sections
-- **Mobile Menu**: Removed `border-b border-border` from navbar menu items
-- **Auth Dialog**: Removed horizontal line in hero section's email/password divider
-- **Design Goal**: Seamless section flow without visible border interruptions
-
-## Development Tools & Scripts
-
-### Utility Scripts
-- **[setup.py](mdc:setup.py)** - Automated project setup and environment configuration
-- **[start.py](mdc:start.py)** - Development environment starter with service orchestration
-- **[backend/utils/scripts/](mdc:backend/utils/scripts)** - Maintenance and utility scripts
-
-### Container Development
-```bash
-# Start all services with Docker Compose
-docker compose up
-
-# Start specific services
-docker compose up backend frontend
-
-# Rebuild containers
-docker compose build
-
-# View logs
-docker compose logs -f backend
-docker compose logs -f frontend
-
-# Stop all services
-docker compose down
-
-# Clear cache and rebuild (when needed)
-docker compose down
-docker compose build --no-cache frontend
-docker compose up -d
-```
-
-### Fast Development Workflow
-For faster frontend development (avoid Docker rebuilds):
-
-```bash
-# Keep backend in Docker
-docker compose up backend redis rabbitmq worker
-
-# Run frontend locally for instant hot reload
-cd frontend
-npm install
-npm run dev  # Starts on localhost:3000
-```
-
-Benefits:
-- ⚡ **Instant hot reload** - changes appear immediately
-- 🔧 **No rebuilds** needed  
-- 🐛 **Better debugging** with browser dev tools
-- 🚀 **Faster development cycle**
-
-## Database Management
-
-### Supabase Setup and Operations
-```bash
-# Initialize Supabase in project
-supabase init
-
-# Link to remote project
-supabase link --project-ref your-project-ref
-
-# Apply migrations to local database
-supabase db reset
-
-# Apply migrations to remote database
-supabase db push
-
-# Generate TypeScript types
-supabase gen types typescript --local > types/supabase.ts
-```
-
-### Migration Workflow
-1. **Create Migration**: `supabase migration new migration_name`
-2. **Edit SQL**: Add changes in [backend/supabase/migrations/](mdc:backend/supabase/migrations)
-3. **Test Locally**: `supabase db reset`
-4. **Deploy**: `supabase db push`
-
-## Agent Development
-
-### Agent Tool Development
-```bash
-# Create new tool
-touch backend/agent/tools/my_new_tool.py
-
-# Register tool in registry
-# Edit backend/agentpress/tool_registry.py
-
-# Test tool in sandbox
-poetry run python -m pytest tests/test_tools.py
-```
-
-### MCP Integration
-```bash
-# Start MCP local server
-cd backend
-poetry run python mcp_local/api.py
-
-# Test MCP client connection
-poetry run python test_mcp_use.py
-```
-
 ## Code Quality & Standards
 
 ### Python (Backend)
@@ -422,12 +265,14 @@ poetry run python test_mcp_use.py
 - **Type Checking**: mypy for static type analysis
 - **Linting**: flake8 for code quality
 - **Testing**: pytest for unit and integration tests
+- **Error Handling**: Robust retry mechanisms for external services
 
 ### TypeScript (Frontend)
 - **Formatting**: Prettier for consistent code style
 - **Type Checking**: TypeScript strict mode
 - **Linting**: ESLint for code quality
 - **Testing**: Jest for unit tests
+- **Unicode Handling**: Proper filename normalization for cross-platform compatibility
 
 ### Git Workflow
 - **Branch Naming**: `feature/description`, `fix/description`, `hotfix/description`
@@ -435,302 +280,28 @@ poetry run python test_mcp_use.py
 - **Pull Requests**: Required for main branch
 - **Code Review**: At least one approval required
 
-## Environment Management
+## Feature Flags & Troubleshooting
 
-### Development Environments
-- **Local**: Use `.env` files (never commit these)
-- **Docker**: Environment variables in docker-compose.yaml
-- **Production**: Secure environment variable injection
+For comprehensive information about feature flag management, troubleshooting common issues, debugging commands, and performance optimization, see:
 
-### Feature Flags
-- **Backend**: Use environment variables for feature toggles
-- **Frontend**: [flags.ts](mdc:frontend/src/flags.ts) for client-side feature management
+**📖 [Feature Flags & Troubleshooting Guide](mdc:.cursor/rules/feature-flags-troubleshooting.mdc)**
+
+### Quick Reference
+- **Feature Flags**: Redis-based system for enabling/disabling features
+- **Troubleshooting**: Common issues with detailed solutions including Unicode filename issues
+- **Debug Commands**: Service health checks and debugging utilities
+- **Performance**: Optimization tips for frontend and backend
+- **Redis Reliability**: Automatic retry mechanisms for connection failures
 
 ## Monitoring & Debugging
 
 ### Error Tracking
 - **Sentry Integration**: [backend/sentry.py](mdc:backend/sentry.py) and [frontend/src/sentry.config.ts](mdc:frontend/src/sentry.config.ts)
 - **LLM Observability**: Langfuse integration in [backend/services/langfuse.py](mdc:backend/services/langfuse.py)
+- **Retry Monitoring**: Built-in logging for retry operations
 
 ### Performance Monitoring
 - **Backend**: FastAPI built-in metrics and logging
 - **Frontend**: Next.js built-in analytics and Core Web Vitals
 - **Database**: Supabase dashboard for query performance
-
-## Testing Strategy
-
-### Backend Testing
-```bash
-# Run all tests
-poetry run pytest
-
-# Run specific test file
-poetry run pytest tests/test_agents.py
-
-# Run with coverage
-poetry run pytest --cov=backend
-```
-
-### Frontend Testing
-```bash
-# Run unit tests
-npm run test
-
-# Run tests in watch mode
-npm run test:watch
-
-# Run end-to-end tests
-npm run test:e2e
-```
-
-## Feature Flag Management
-
-### Overview
-The application uses a Redis-based feature flag system to control feature availability. Feature flags allow enabling/disabling functionality without code deployments.
-
-### Available Feature Flags
-- **`custom_agents`**: Controls custom agent creation and management functionality
-- **`agent_marketplace`**: Controls agent marketplace features
-
-### Managing Feature Flags
-
-#### Enable a Feature Flag
-```bash
-# From within Docker container (recommended)
-docker compose exec backend bash -c "cd /app && PYTHONPATH=/app python flags/setup.py enable custom_agents 'Enable custom agent creation'"
-
-# Check flag status
-curl -X GET http://localhost:8000/api/feature-flags/custom_agents
-```
-
-#### Disable a Feature Flag
-```bash
-docker compose exec backend bash -c "cd /app && PYTHONPATH=/app python flags/setup.py disable custom_agents 'Disable custom agents'"
-```
-
-#### List All Feature Flags
-```bash
-docker compose exec backend bash -c "cd /app && PYTHONPATH=/app python flags/setup.py list"
-```
-
-#### Check Flag Status
-```bash
-docker compose exec backend bash -c "cd /app && PYTHONPATH=/app python flags/setup.py status custom_agents"
-```
-
-### Feature Flag CLI Commands
-```bash
-# Enable with description
-python flags/setup.py enable flag_name "Description"
-
-# Disable with description  
-python flags/setup.py disable flag_name "Description"
-
-# Toggle flag state
-python flags/setup.py toggle flag_name "Description"
-
-# Delete flag completely
-python flags/setup.py delete flag_name
-
-# Show detailed status
-python flags/setup.py status flag_name
-
-# List all flags
-python flags/setup.py list
-```
-
-### Frontend Feature Flag Usage
-```typescript
-// Check feature flag in React components
-const { flags, loading } = useFeatureFlags(['custom_agents']);
-const customAgentsEnabled = flags.custom_agents;
-
-// Check feature flag in server components
-const agentPlaygroundEnabled = await isFlagEnabled('custom_agents');
-```
-
-### Backend Feature Flag Usage
-```python
-# Check feature flag in API endpoints
-from flags.flags import is_enabled
-
-if not await is_enabled("custom_agents"):
-    raise HTTPException(status_code=403, detail="Feature not available")
-```
-
-## Troubleshooting
-
-### Common Issues and Solutions
-
-#### "Custom agents is not enabled" Error
-**Problem**: Frontend shows "Custom agents is not enabled" console error.
-
-**Solution**: Enable the custom_agents feature flag:
-```bash
-docker compose exec backend bash -c "cd /app && PYTHONPATH=/app python flags/setup.py enable custom_agents 'Enable custom agent creation'"
-```
-
-**Verification**: Check flag status:
-```bash
-curl -X GET http://localhost:8000/api/feature-flags/custom_agents
-```
-
-#### Image Generation "Failed to Load Image" Error
-**Problem**: Generated images show "Failed to load image" in the UI.
-
-**Root Cause**: The `fal_media_generation` tool fails to save images to workspace due to sandbox connectivity issues, but falls back to temporary URLs that the frontend cannot render due to CORS/CSP restrictions.
-
-**Solution**: The tool now provides enhanced error handling with detailed messages explaining the issue and providing fallback options.
-
-**Prevention**: Ensure proper sandbox connectivity and workspace configuration.
-
-#### Redis Connection Errors
-**Problem**: Feature flag operations fail with Redis connection errors.
-
-**Solution**: 
-1. Ensure Redis container is running: `docker compose ps`
-2. Restart Redis if needed: `docker compose restart redis`
-3. Check Redis logs: `docker compose logs redis`
-
-#### Docker Container Issues
-**Problem**: Services fail to start or behave unexpectedly.
-
-**Solutions**:
-```bash
-# Clear Docker cache and rebuild
-docker compose down
-docker system prune -a -f
-docker compose build --no-cache
-docker compose up -d
-
-# Check container logs
-docker compose logs -f backend
-docker compose logs -f frontend
-
-# Restart specific service
-docker compose restart backend
-```
-
-#### Frontend Build Errors
-**Problem**: Next.js build fails or shows warnings.
-
-**Solutions**:
-```bash
-# Clear Next.js cache
-cd frontend
-rm -rf .next
-npm run build
-
-# Clear node_modules and reinstall
-rm -rf node_modules package-lock.json
-npm install
-
-# Check for TypeScript errors
-npm run type-check
-```
-
-#### Database Migration Issues
-**Problem**: Supabase migrations fail or database is out of sync.
-
-**Solutions**:
-```bash
-# Reset local database
-supabase db reset
-
-# Apply migrations manually
-supabase db push
-
-# Check migration status
-supabase migration list
-```
-
-### Debug Commands
-
-#### Check Service Health
-```bash
-# Check all services
-docker compose ps
-
-# Check specific service logs
-docker compose logs -f backend
-docker compose logs -f frontend
-docker compose logs -f redis
-
-# Check API health
-curl http://localhost:8000/health
-curl http://localhost:3000/api/health
-```
-
-#### Database Debugging
-```bash
-# Connect to local Supabase
-supabase db connect
-
-# Check database status
-supabase status
-
-# View migration history
-supabase migration list
-```
-
-#### Feature Flag Debugging
-```bash
-# List all flags and their status
-docker compose exec backend bash -c "cd /app && PYTHONPATH=/app python flags/setup.py list"
-
-# Check Redis directly
-docker compose exec redis redis-cli keys "feature_flag:*"
-docker compose exec redis redis-cli hgetall "feature_flag:custom_agents"
-```
-
-### Performance Optimization
-
-#### Frontend Performance
-```bash
-# Analyze bundle size
-cd frontend
-npm run analyze
-
-# Check Core Web Vitals
-npm run lighthouse
-
-# Optimize images
-npm run optimize-images
-```
-
-#### Backend Performance
-```bash
-# Check API response times
-curl -w "@curl-format.txt" -o /dev/null -s http://localhost:8000/api/health
-
-# Monitor memory usage
-docker stats
-
-# Check database query performance
-# Use Supabase dashboard for query analysis
-```
-
-### Log Analysis
-
-#### Backend Logs
-```bash
-# View real-time logs
-docker compose logs -f backend
-
-# Search for specific errors
-docker compose logs backend | grep -i error
-
-# View agent execution logs
-docker compose logs backend | grep -i agentpress
-```
-
-#### Frontend Logs
-```bash
-# View Next.js logs
-docker compose logs -f frontend
-
-# Check browser console for client-side errors
-# Open browser dev tools -> Console tab
-```
-
-## Testing Strategy
+- **Redis**: Connection reliability with automatic retry mechanisms

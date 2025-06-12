@@ -50,6 +50,7 @@ alwaysApply: false
 - **Workspace Integration**: Automatic image saving to project workspace
 - **Fallback URLs**: Temporary access URLs when workspace saving fails
 - **Format Support**: Multiple output formats (PNG, JPG, MP4, etc.)
+- **Default Enablement**: Now enabled for all agents by default (previously only for "Suna" agent)
 
 **Key Features**:
 - Detailed error messages for troubleshooting
@@ -57,6 +58,7 @@ alwaysApply: false
 - Clear user feedback about generation success/failure
 - Automatic file naming with timestamps
 - Support for various aspect ratios and quality settings
+- Cross-platform filename normalization using Unicode utilities
 
 **Usage Examples**:
 ```python
@@ -70,6 +72,8 @@ fal_media_generation(
 ```
 
 **Error Handling**: The tool now provides detailed error messages when image saving fails, explaining the issue and providing temporary URLs as fallback options.
+
+**Configuration**: Requires `FAL_KEY` environment variable in `backend/.env` file.
 
 ## External Data Providers
 
@@ -94,6 +98,25 @@ Multi-service API access
 - **Response Processor**: LLM response handling and formatting
 - **Thread Manager**: Thread lifecycle and state management
 - **Tool Registry**: Tool registration and discovery
+
+## Infrastructure & Reliability
+
+### Redis Retry Utilities
+**Location**: `backend/utils/retry.py`
+- **Purpose**: Automatic retry mechanism for Redis operations with exponential backoff
+- **Features**: Configurable retry attempts, delays, and type-safe async function wrapper
+- **Integration**: Used throughout backend services for improved Redis connection reliability
+
+### Unicode File Handling
+**Location**: `frontend/src/lib/utils/unicode.ts`
+- **Purpose**: Cross-platform filename normalization (macOS NFD ↔ Windows/Linux NFC)
+- **Features**: Automatic Unicode normalization for file uploads and operations
+- **Integration**: Used in file upload handlers, viewer modals, and dashboard components
+
+### MCP Server Enhancements
+- **Improved Configuration**: Enhanced MCP server browsing and setup interface
+- **Better Error Handling**: More robust connection management and error reporting
+- **Deprecated Component Removal**: Cleanup of outdated MCP configuration components
 
 ## Model Context Protocol (MCP)
 

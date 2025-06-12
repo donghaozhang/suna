@@ -2,82 +2,78 @@
 
 ## Updated Cursor Rules (January 2025)
 
-This directory contains updated and streamlined cursor rules for the Suna project, incorporating recent changes and improvements.
+This directory contains updated and streamlined cursor rules for the Suna project, incorporating recent changes and improvements based on the upstream merge.
 
 ### Files Updated
 
 #### 1. development-workflow.mdc
-**Changes**: Dramatically shortened and updated with recent improvements
-- Added modern Docker syntax: `docker compose` (space) not `docker-compose` (hyphen)
-- Added fast development workflow for frontend hot reload
-- Updated Quriosity branding information
-- Added recent UI/UX improvements documentation
-- Streamlined environment configuration
-- Focused on essential commands and workflows
+**Changes**: Split and reorganized with latest infrastructure improvements
+- **Split**: Created separate `feature-flags-troubleshooting.mdc` for feature flags and troubleshooting
+- **Updated**: Added Unicode filename normalization utilities
+- **Added**: Redis retry utilities with exponential backoff
+- **Updated**: MCP server improvements and configuration enhancements
+- **Added**: Organized test directory structure with documentation
+- **Maintained**: Modern Docker syntax and fast development workflow
 
-#### 2. frontend-conventions.mdc  
-**Changes**: Reduced from 853 lines to ~400 lines
-- Focused on essential Next.js App Router patterns
-- Updated with recent UI/UX standards (FlickeringGrid removal, border cleanup)
-- Added Quriosity branding conventions
-- Included dark mode support patterns
-- Streamlined component structure guidelines
-- Added home page component documentation
+#### 2. feature-flags-troubleshooting.mdc
+**New File**: Comprehensive guide for feature flags and troubleshooting
+- **Feature Flag Management**: Redis-based system with CLI commands
+- **Troubleshooting Guide**: Common issues including Unicode filename problems
+- **Debug Commands**: Service health checks and Redis debugging
+- **Performance Optimization**: Frontend and backend optimization tips
+- **Testing Guidelines**: Manual testing checklist and quality assurance
 
-#### 3. backend-conventions.mdc
-**Changes**: Reduced from 837 lines to ~300 lines  
-- Focused on essential FastAPI patterns
-- Streamlined service layer architecture
-- Updated with modern Docker syntax
-- Added essential agent system patterns
-- Removed verbose examples in favor of concise patterns
+#### 3. agent-capabilities.mdc
+**Changes**: Updated with infrastructure improvements
+- **Added**: Infrastructure & Reliability section
+- **Updated**: Redis retry utilities documentation
+- **Added**: Unicode file handling capabilities
+- **Updated**: MCP server enhancements
+- **Enhanced**: FAL media tool with default enablement info
 
-#### 4. agent-capabilities.mdc
-**Changes**: Reduced from 581 lines to ~100 lines
-- Focused on core tool capabilities
-- Removed verbose code examples
-- Streamlined external provider descriptions
-- Added concise agent use cases
-- Maintained essential security and isolation information
+#### 4. project-architecture.mdc
+**Changes**: Updated file structure and added infrastructure improvements
+- **Updated**: Complete file structure with new utilities and test directories
+- **Added**: Recent Infrastructure Improvements section
+- **Enhanced**: Redis reliability, Unicode handling, MCP improvements
+- **Added**: Testing infrastructure and feature flag system documentation
 
-#### 5. project-architecture.mdc
-**Changes**: Minor updates with recent UI improvements
-- Added section on recent UI/UX improvements
-- Updated Quriosity showcase documentation
-- Maintained comprehensive architecture overview
+#### 5. frontend-conventions.mdc  
+**Status**: Previously updated (maintained at ~400 lines)
 
-#### 6. database-supabase.mdc
-**Status**: Kept as-is (already concise at 411 lines)
+#### 6. backend-conventions.mdc
+**Status**: Previously updated (maintained at ~300 lines)
+
+#### 7. database-supabase.mdc
+**Status**: Maintained as-is (concise at 411 lines)
 
 ## Key Improvements Made
 
-### UI/UX Updates Documented
-- FlickeringGrid vertical line removal
-- Horizontal border elimination between sections
-- Unified background system with clean gradients
-- Dark mode optimization
-- Consistent agent card styling
-- Quriosity showcase section integration
-
-### Branding Updates
-- Updated site name from "Kortix Suna" to "Quriosity"
-- Updated product name from "Suna" to "Q"
-- Updated repository display to "Quriosity/Q"
-- Updated footer links to point to https://quriosity.com.au/
-- Updated logo system with three-logo approach
+### Infrastructure Enhancements
+- **Redis Reliability**: New retry utilities with exponential backoff for connection resilience
+- **Unicode File Handling**: Cross-platform filename normalization (macOS NFD ↔ Windows/Linux NFC)
+- **MCP Server Improvements**: Enhanced configuration interface and error handling
+- **Testing Organization**: Structured test directory with comprehensive documentation
+- **Feature Flag System**: Redis-based centralized feature management
 
 ### Technical Updates
-- Modern Docker command syntax throughout
-- Updated development workflow patterns
-- Fast frontend development setup
-- Streamlined component conventions
-- Updated environment configuration
+- **Modern Docker**: `docker compose` syntax throughout documentation
+- **Organized File Structure**: Updated with new utilities, tests, and infrastructure components
+- **Enhanced Tools**: FAL media generation enabled by default for all agents
+- **Improved Error Handling**: Better debugging tools and troubleshooting guides
+- **Performance Optimization**: Frontend and backend optimization strategies
 
-### Size Reductions
-- **frontend-conventions.mdc**: 853 → ~400 lines (-53%)
-- **backend-conventions.mdc**: 837 → ~300 lines (-64%)
-- **agent-capabilities.mdc**: 581 → ~100 lines (-83%)
-- **development-workflow.mdc**: 431 → ~300 lines (-30%)
+### Documentation Structure
+- **File Split**: Separated troubleshooting into dedicated guide for better organization
+- **Comprehensive Troubleshooting**: Common issues with detailed solutions
+- **Debug Commands**: Service health checks, Redis debugging, file upload debugging
+- **Manual Testing**: Quality assurance checklists and testing guidelines
+
+### Branding & UI/UX (Previously Updated)
+- Updated site name from "Kortix Suna" to "Quriosity"
+- Updated product name from "Suna" to "Q"
+- FlickeringGrid improvements and border cleanup
+- Dark mode optimization and consistent styling
 
 ## Benefits of Updates
 
@@ -98,10 +94,17 @@ These rules are optimized for:
 
 ## Recent Changes Covered
 
-- Docker command syntax modernization
-- Quriosity branding updates
-- UI/UX improvements (FlickeringGrid, borders, colors)
-- Homepage component updates
-- Logo system implementation
-- Dark mode support patterns
-- Development workflow optimizations 
+### From Upstream Merge
+- **Redis Reliability**: New retry utilities with automatic connection recovery
+- **Unicode File Handling**: Cross-platform filename normalization for macOS/Windows compatibility
+- **MCP Server Improvements**: Enhanced configuration interface and deprecated component cleanup
+- **Testing Infrastructure**: Organized `backend/tests/` directory with comprehensive documentation
+- **Feature Flag System**: Redis-based centralized feature management with CLI tools
+- **FAL Media Tool**: Now enabled by default for all agents (not just "Suna" agent)
+
+### Previously Updated
+- Docker command syntax modernization (`docker compose` vs `docker-compose`)
+- Quriosity branding updates (site name, product name, repository display)
+- UI/UX improvements (FlickeringGrid removal, border cleanup, color optimization)
+- Homepage component updates and logo system implementation
+- Dark mode support patterns and development workflow optimizations 

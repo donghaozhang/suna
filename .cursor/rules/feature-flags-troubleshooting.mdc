@@ -1,0 +1,374 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Feature Flags & Troubleshooting Guide
+
+## Feature Flag Management
+
+### Overview
+The application uses a Redis-based feature flag system to control feature availability. Feature flags allow enabling/disabling functionality without code deployments.
+
+### Available Feature Flags
+- **`custom_agents`**: Controls custom agent creation and management functionality
+- **`agent_marketplace`**: Controls agent marketplace features
+
+### Managing Feature Flags
+
+#### Enable a Feature Flag
+```bash
+# From within Docker container (recommended)
+docker compose exec backend bash -c "cd /app && PYTHONPATH=/app python flags/setup.py enable custom_agents 'Enable custom agent creation'"
+
+# Check flag status
+curl -X GET http://localhost:8000/api/feature-flags/custom_agents
+```
+
+#### Disable a Feature Flag
+```bash
+docker compose exec backend bash -c "cd /app && PYTHONPATH=/app python flags/setup.py disable custom_agents 'Disable custom agents'"
+```
+
+#### List All Feature Flags
+```bash
+docker compose exec backend bash -c "cd /app && PYTHONPATH=/app python flags/setup.py list"
+```
+
+#### Check Flag Status
+```bash
+docker compose exec backend bash -c "cd /app && PYTHONPATH=/app python flags/setup.py status custom_agents"
+```
+
+### Feature Flag CLI Commands
+```bash
+# Enable with description
+python flags/setup.py enable flag_name "Description"
+
+# Disable with description  
+python flags/setup.py disable flag_name "Description"
+
+# Toggle flag state
+python flags/setup.py toggle flag_name "Description"
+
+# Delete flag completely
+python flags/setup.py delete flag_name
+
+# Show detailed status
+python flags/setup.py status flag_name
+
+# List all flags
+python flags/setup.py list
+```
+
+### Frontend Feature Flag Usage
+```typescript
+// Check feature flag in React components
+const { flags, loading } = useFeatureFlags(['custom_agents']);
+const customAgentsEnabled = flags.custom_agents;
+
+// Check feature flag in server components
+const agentPlaygroundEnabled = await isFlagEnabled('custom_agents');
+```
+
+### Backend Feature Flag Usage
+```python
+# Check feature flag in API endpoints
+from flags.flags import is_enabled
+
+if not await is_enabled("custom_agents"):
+    raise HTTPException(status_code=403, detail="Feature not available")
+```
+
+## Troubleshooting
+
+### Common Issues and Solutions
+
+#### "Custom agents is not enabled" Error
+**Problem**: Frontend shows "Custom agents is not enabled" console error.
+
+**Solution**: Enable the custom_agents feature flag:
+```bash
+docker compose exec backend bash -c "cd /app && PYTHONPATH=/app python flags/setup.py enable custom_agents 'Enable custom agent creation'"
+```
+
+**Verification**: Check flag status:
+```bash
+curl -X GET http://localhost:8000/api/feature-flags/custom_agents
+```
+
+#### Image Generation "Failed to Load Image" Error
+**Problem**: Generated images show "Failed to load image" in the UI.
+
+**Root Cause**: The `fal_media_generation` tool fails to save images to workspace due to sandbox connectivity issues, but falls back to temporary URLs that the frontend cannot render due to CORS/CSP restrictions.
+
+**Solution**: The tool now provides enhanced error handling with detailed messages explaining the issue and providing fallback options.
+
+**Prevention**: Ensure proper sandbox connectivity and workspace configuration.
+
+#### Unicode Filename Issues
+**Problem**: File uploads fail or show inconsistent names across different operating systems (especially macOS vs Windows/Linux).
+
+**Root Cause**: macOS uses NFD (Normalized Form Decomposed) Unicode while other systems use NFC (Normalized Form Composed).
+
+**Solution**: The application now automatically normalizes filenames using the Unicode utility:
+```typescript
+import { normalizeFilenameToNFC } from '@/lib/utils/unicode';
+const normalizedName = normalizeFilenameToNFC(filename);
+```
+
+**Prevention**: Always use the normalization utility when handling user-uploaded filenames.
+
+#### Redis Connection Errors
+**Problem**: Feature flag operations fail with Redis connection errors.
+
+**Solution**: 
+1. Ensure Redis container is running: `docker compose ps`
+2. Restart Redis if needed: `docker compose restart redis`
+3. Check Redis logs: `docker compose logs redis`
+4. **New**: Automatic retry mechanism now handles transient connection issues
+
+**Enhanced Reliability**: The application now includes retry utilities in `backend/utils/retry.py` that automatically handle Redis connection failures with exponential backoff.
+
+#### Docker Container Issues
+**Problem**: Services fail to start or behave unexpectedly.
+
+**Solutions**:
+```bash
+# Clear Docker cache and rebuild
+docker compose down
+docker system prune -a -f
+docker compose build --no-cache
+docker compose up -d
+
+# Check container logs
+docker compose logs -f backend
+docker compose logs -f frontend
+
+# Restart specific service
+docker compose restart backend
+```
+
+#### Frontend Build Errors
+**Problem**: Next.js build fails or shows warnings.
+
+**Solutions**:
+```bash
+# Clear Next.js cache
+cd frontend
+rm -rf .next
+npm run build
+
+# Clear node_modules and reinstall
+rm -rf node_modules package-lock.json
+npm install
+
+# Check for TypeScript errors
+npm run type-check
+```
+
+#### Database Migration Issues
+**Problem**: Supabase migrations fail or database is out of sync.
+
+**Solutions**:
+```bash
+# Reset local database
+supabase db reset
+
+# Apply migrations manually
+supabase db push
+
+# Check migration status
+supabase migration list
+```
+
+#### MCP Server Configuration Issues
+**Problem**: MCP servers fail to connect or tools are not available.
+
+**Root Cause**: Recent improvements to MCP server browsing and configuration may require updating existing configurations.
+
+**Solution**:
+1. Check MCP server configuration in agent settings
+2. Verify server credentials and connection settings
+3. Re-configure servers using the improved MCP configuration interface
+4. Check for deprecated MCP configuration components (some were removed in recent updates)
+
+### Debug Commands
+
+#### Check Service Health
+```bash
+# Check all services
+docker compose ps
+
+# Check specific service logs
+docker compose logs -f backend
+docker compose logs -f frontend
+docker compose logs -f redis
+
+# Check API health
+curl http://localhost:8000/health
+curl http://localhost:3000/api/health
+```
+
+#### Database Debugging
+```bash
+# Connect to local Supabase
+supabase db connect
+
+# Check database status
+supabase status
+
+# View migration history
+supabase migration list
+```
+
+#### Feature Flag Debugging
+```bash
+# List all flags and their status
+docker compose exec backend bash -c "cd /app && PYTHONPATH=/app python flags/setup.py list"
+
+# Check Redis directly
+docker compose exec redis redis-cli keys "feature_flag:*"
+docker compose exec redis redis-cli hgetall "feature_flag:custom_agents"
+```
+
+#### Redis Connection Debugging
+```bash
+# Check Redis connectivity
+docker compose exec backend python -c "
+import redis
+r = redis.Redis(host='redis', port=6379, db=0)
+print(r.ping())
+"
+
+# Monitor Redis operations
+docker compose exec redis redis-cli monitor
+
+# Check Redis memory usage
+docker compose exec redis redis-cli info memory
+```
+
+#### File Upload Debugging
+```bash
+# Check Unicode normalization
+node -e "
+const filename = 'café.txt';
+console.log('Original:', filename);
+console.log('NFC:', filename.normalize('NFC'));
+console.log('NFD:', filename.normalize('NFD'));
+console.log('Are they equal?', filename.normalize('NFC') === filename.normalize('NFD'));
+"
+
+# Check workspace file permissions
+docker compose exec backend ls -la /workspace/
+```
+
+### Performance Optimization
+
+#### Frontend Performance
+```bash
+# Analyze bundle size
+cd frontend
+npm run analyze
+
+# Check Core Web Vitals
+npm run lighthouse
+
+# Optimize images
+npm run optimize-images
+```
+
+#### Backend Performance
+```bash
+# Check API response times
+curl -w "@curl-format.txt" -o /dev/null -s http://localhost:8000/api/health
+
+# Monitor memory usage
+docker stats
+
+# Check database query performance
+# Use Supabase dashboard for query analysis
+
+# Monitor Redis performance
+docker compose exec redis redis-cli --latency-history -h redis -p 6379
+```
+
+#### Redis Performance Optimization
+```bash
+# Check Redis slow log
+docker compose exec redis redis-cli slowlog get 10
+
+# Monitor Redis stats
+docker compose exec redis redis-cli info stats
+
+# Check connection pool status
+docker compose logs backend | grep -i redis
+```
+
+### Log Analysis
+
+#### Backend Logs
+```bash
+# View real-time logs
+docker compose logs -f backend
+
+# Search for specific errors
+docker compose logs backend | grep -i error
+
+# View agent execution logs
+docker compose logs backend | grep -i agentpress
+
+# Check retry operation logs
+docker compose logs backend | grep -i retry
+```
+
+#### Frontend Logs
+```bash
+# View Next.js logs
+docker compose logs -f frontend
+
+# Check browser console for client-side errors
+# Open browser dev tools -> Console tab
+
+# Check Unicode normalization logs
+docker compose logs frontend | grep -i unicode
+```
+
+#### Redis Logs
+```bash
+# View Redis logs
+docker compose logs -f redis
+
+# Check for connection issues
+docker compose logs redis | grep -i "connection\|error\|warning"
+```
+
+### Testing & Quality Assurance
+
+#### Test Organization
+The test suite has been reorganized in `backend/tests/` with improved documentation:
+
+```bash
+# Run all tests
+cd backend
+poetry run pytest tests/
+
+# Run specific test categories
+poetry run pytest tests/test_fal_tool.py      # FAL media generation tests
+poetry run pytest tests/test_image_generation.py  # Image generation tests
+poetry run pytest tests/check_projects.py    # Project validation tests
+
+# Run tests with coverage
+poetry run pytest tests/ --cov=backend --cov-report=html
+
+# Check test documentation
+cat backend/tests/README.md
+```
+
+#### Manual Testing Checklist
+1. **Feature Flags**: Verify all feature flags can be toggled
+2. **File Uploads**: Test with Unicode filenames across different systems
+3. **Redis Operations**: Verify retry mechanisms work during Redis restarts
+4. **MCP Integration**: Test MCP server configuration and tool availability
+5. **Image Generation**: Verify FAL tool functionality and error handling
+6. **Cross-Platform**: Test Unicode filename handling on macOS and Windows
