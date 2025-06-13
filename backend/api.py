@@ -113,10 +113,22 @@ async def log_requests_middleware(request: Request, call_next):
 allowed_origins = ["https://www.suna.so", "https://suna.so", "http://localhost:3000"]
 allow_origin_regex = None
 
+# Add Railway deployment origins
+allowed_origins.extend([
+    "https://frontend-production-cfc7.up.railway.app",
+    "https://backend-production-65beb.up.railway.app"
+])
+
 # Add staging-specific origins
 if config.ENV_MODE == EnvMode.STAGING:
     allowed_origins.append("https://staging.suna.so")
     allow_origin_regex = r"https://suna-.*-prjcts\.vercel\.app"
+
+# Add Railway regex pattern for any Railway deployments
+if allow_origin_regex:
+    allow_origin_regex = f"{allow_origin_regex}|https://.*\.up\.railway\.app"
+else:
+    allow_origin_regex = r"https://.*\.up\.railway\.app"
 
 app.add_middleware(
     CORSMiddleware,
