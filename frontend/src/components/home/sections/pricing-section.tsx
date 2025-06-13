@@ -18,7 +18,6 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import {
-  getSubscription,
   createCheckoutSession,
   SubscriptionStatus,
   CreateCheckoutSessionResponse,
@@ -631,7 +630,22 @@ export function PricingSection({
   const fetchCurrentPlan = async () => {
     setIsFetchingPlan(true);
     try {
-      const subscriptionData = await getSubscription();
+      // Mock subscription data to prevent 404 errors
+      console.log('[BILLING] Using mock subscription data - billing disabled');
+      const subscriptionData: SubscriptionStatus = {
+        status: 'active',
+        plan_name: 'free',
+        price_id: 'free',
+        current_period_end: null,
+        cancel_at_period_end: false,
+        trial_end: null,
+        minutes_limit: 999999,
+        current_usage: 0,
+        has_schedule: false,
+        scheduled_plan_name: null,
+        scheduled_price_id: null,
+        scheduled_change_date: null,
+      };
       console.log('Fetched Subscription Status:', subscriptionData);
       setCurrentSubscription(subscriptionData);
       setIsAuthenticated(true);
