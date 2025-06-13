@@ -143,6 +143,37 @@ app.include_router(transcription_api.router, prefix="/api")
 
 app.include_router(email_api.router, prefix="/api")
 
+@app.get("/health")
+async def health_check_root():
+    """Health check endpoint to verify API is working (root level for frontend)."""
+    logger.info("Health check endpoint called (root)")
+    return {
+        "status": "ok", 
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "instance_id": instance_id
+    }
+
+@app.get("/feature-flags/{flag_name}")
+async def get_feature_flag_root(flag_name: str):
+    """Feature flag endpoint at root level for frontend compatibility."""
+    logger.info(f"Feature flag check for {flag_name} (root)")
+    try:
+        from flags.flags import is_enabled, get_flag_details
+        enabled = await is_enabled(flag_name)
+        details = await get_flag_details(flag_name)
+        return {
+            "flag_name": flag_name,
+            "enabled": enabled,
+            "details": details
+        }
+    except Exception as e:
+        logger.error(f"Error fetching feature flag {flag_name}: {str(e)}")
+        return {
+            "flag_name": flag_name,
+            "enabled": False,
+            "details": None
+        }
+
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint to verify API is working."""
