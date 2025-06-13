@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { createClient } from '@/lib/supabase/client';
-
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
+import { getApiUrl } from '@/lib/api';
 
 interface MCPServer {
   qualifiedName: string;
@@ -87,7 +86,7 @@ export const useMCPServers = (query?: string, page: number = 1, pageSize: number
         params.append('q', query);
       }
 
-      const response = await fetch(`${API_URL}/mcp/servers?${params}`, {
+      const response = await fetch(getApiUrl(`/mcp/servers?${params}`), {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
         },
@@ -113,7 +112,7 @@ export const useMCPServerDetails = (qualifiedName: string, enabled: boolean = tr
       if (!session) throw new Error('No session');
 
       const response = await fetch(
-        `${API_URL}/mcp/servers/${qualifiedName}`,
+        getApiUrl(`/mcp/servers/${qualifiedName}`),
         {
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
@@ -147,7 +146,7 @@ export const usePopularMCPServersV2 = (page: number = 1, pageSize: number = 50) 
       });
 
       const response = await fetch(
-        `${API_URL}/mcp/popular-servers/v2?${params}`,
+        getApiUrl(`/mcp/popular-servers/v2?${params}`),
         {
           headers: {
             'Authorization': `Bearer ${session.access_token}`,

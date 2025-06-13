@@ -86,8 +86,13 @@ npx @railway/cli up --service backend
 npx @railway/cli up --service frontend
 npx @railway/cli up --service worker
 
-# Redeploy service
+# Redeploy services (force new deployment)
 npx @railway/cli redeploy --service backend
+npx @railway/cli redeploy --service frontend
+npx @railway/cli redeploy --service worker
+
+# Redeploy all services after code changes
+npx @railway/cli redeploy --service backend && npx @railway/cli redeploy --service frontend
 ```
 
 ### Service Management
@@ -282,12 +287,154 @@ railway logs --service backend
 ### Network Issues
 ```bash
 # Service communication problems
-railway variables --service backend
+npx @railway/cli variables --service backend
 
 # Verify internal URLs
 - Use Railway private domains for service-to-service communication
 - Check CORS configuration for frontend-backend communication
 - Validate environment variable interpolation
+```
+
+## API Error Testing & Debugging
+
+### Common API Routing Errors
+
+#### 404 Errors - Missing /api Prefix
+**Problem**: Frontend making API calls without `/api` prefix
+```bash
+# Wrong: GET /billing/subscription HTTP/1.1" 404
+# Right: GET /api/billing/subscription HTTP/1.1" 200
+```
+
+**Solution**: Use `getApiUrl()` helper function in frontend
+```typescript
+// Wrong
+const response = await fetch(`${API_URL}/billing/subscription`);
+
+// Right  
+const response = await fetch(getApiUrl('/billing/subscription'));
+```
+
+**Testing Commands**:
+```bash
+# Test API endpoints directly
+curl -s https://backend-production-xxxxx.up.railway.app/api/health
+curl -s https://backend-production-xxxxx.up.railway.app/api/billing/subscription
+curl -s -X POST https://backend-production-xxxxx.up.railway.app/api/agent/initiate
+
+# Expected responses:
+# Health: {"status":"ok","timestamp":"..."}
+# Auth endpoints: {"detail":"No valid authentication credentials found"}
+```
+
+#### Authentication Errors
+**Problem**: Missing or invalid JWT tokens
+```bash
+# Error: {"detail":"No valid authentication credentials found"}
+```
+
+**Testing with Authentication**:
+```bash
+# Get JWT token from browser DevTools (Application > Local Storage)
+TOKEN="your-jwt-token-here"
+
+# Test authenticated endpoints
+curl -H "Authorization: Bearer $TOKEN" \
+  https://backend-production-xxxxx.up.railway.app/api/billing/subscription
+
+curl -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -X POST https://backend-production-xxxxx.up.railway.app/api/agent/initiate \
+  -d '{"message":"test"}'
+```
+
+### Error Monitoring Workflow
+
+#### 1. Real-time Error Detection
+```bash
+# Monitor backend logs for errors
+npx @railway/cli logs --service backend --follow | grep -E "(404|500|ERROR)"
+
+# Monitor frontend logs for API errors
+npx @railway/cli logs --service frontend --follow | grep -E "(API Error|fetch failed)"
+```
+
+#### 2. Error Pattern Analysis
+```bash
+# Check for 404 patterns (missing /api prefix)
+npx @railway/cli logs --service backend | grep "404" | head -10
+
+# Check for authentication errors
+npx @railway/cli logs --service backend | grep "No valid authentication" | head -5
+
+# Check for CORS errors
+npx @railway/cli logs --service backend | grep -i "cors" | head -5
+```
+
+#### 3. Frontend API Error Testing
+```bash
+# Test frontend API calls in browser DevTools Console:
+# 1. Open browser DevTools (F12)
+# 2. Go to Console tab
+# 3. Test API calls:
+
+// Test health endpoint
+fetch('/api/health').then(r => r.json()).then(console.log);
+
+// Test billing endpoint (requires auth)
+fetch('/api/billing/subscription').then(r => r.json()).then(console.log);
+
+// Test agent endpoint (requires auth)
+fetch('/api/agent/initiate', {
+  method: 'POST',
+  headers: {'Content-Type': 'application/json'},
+  body: JSON.stringify({message: 'test'})
+}).then(r => r.json()).then(console.log);
+```
+
+### Deployment Verification Checklist
+
+#### After Each Deployment
+```bash
+# 1. Check deployment status
+npx @railway/cli status
+
+# 2. Verify health endpoints
+curl -s https://backend-production-xxxxx.up.railway.app/api/health
+curl -s https://frontend-production-xxxxx.up.railway.app/
+
+# 3. Check for 404 errors in logs
+npx @railway/cli logs --service backend | grep "404" | tail -5
+
+# 4. Test critical API endpoints
+curl -s https://backend-production-xxxxx.up.railway.app/api/billing/subscription
+curl -s -X POST https://backend-production-xxxxx.up.railway.app/api/agent/initiate
+
+# 5. Verify frontend can reach backend
+# Open frontend URL in browser and check DevTools Network tab
+```
+
+#### Error Resolution Steps
+1. **Identify Error Type**: 404, 401, 500, CORS, etc.
+2. **Check Logs**: Use Railway CLI to examine service logs
+3. **Test Endpoints**: Use curl to test API endpoints directly
+4. **Fix Code**: Update frontend API calls or backend routes
+5. **Redeploy**: Use `npx @railway/cli redeploy --service [name]`
+6. **Verify Fix**: Re-test endpoints and monitor logs
+
+### Quick Fix Commands
+```bash
+# Fix API routing issues and redeploy
+git add . && git commit -m "Fix API routing" && git push origin main
+npx @railway/cli redeploy --service frontend
+npx @railway/cli redeploy --service backend
+
+# Monitor deployment progress
+npx @railway/cli logs --service frontend --follow &
+npx @railway/cli logs --service backend --follow &
+
+# Test fixes
+curl -s https://backend-production-xxxxx.up.railway.app/api/health
 ```
 
 ## Production Checklist

@@ -48,22 +48,29 @@ This directory contains updated and streamlined cursor rules for the Suna projec
 **Status**: Maintained as-is (concise at 411 lines)
 
 #### 8. railway-deployment.mdc
-**New File**: Comprehensive Railway deployment rules
+**Updated File**: Comprehensive Railway deployment rules with error testing
 - **Service Architecture**: Frontend, Backend, Worker, Redis, RabbitMQ configuration
 - **Environment Variables**: Complete configuration for all services
-- **Railway CLI Commands**: Project setup, deployment, monitoring, debugging
+- **Railway CLI Commands**: Project setup, deployment, monitoring, debugging (updated to use `npx @railway/cli`)
+- **Redeploy Commands**: Force redeployment for individual services and batch operations
+- **API Error Testing**: 404 error detection, authentication testing, endpoint verification
+- **Error Resolution**: Step-by-step debugging workflow and quick fix commands
 - **Security Configuration**: Environment security, network security, database security
 - **Cost Optimization**: Pricing strategy and resource optimization
-- **Production Checklist**: Pre/post deployment verification steps
+- **Production Checklist**: Pre/post deployment verification steps with error monitoring
 
 #### 9. railway-testing.mdc
-**New File**: Railway testing strategy and workflow rules
+**Updated File**: Railway testing strategy with comprehensive error testing
 - **Testing Strategy**: Branch-based testing approach with auto-deployment
 - **API Testing**: Health checks, authentication, endpoint testing checklists
 - **Frontend Testing**: Browser testing workflow and user flow verification
 - **Automated Testing**: Node.js testing scripts and integration testing
 - **Performance Testing**: Load testing and frontend performance measurement
 - **Regression Testing**: API and frontend regression test suites
+- **Error Testing & Resolution**: 404 error patterns, authentication errors, CORS issues
+- **Real-time Monitoring**: Log monitoring commands for error detection
+- **Deployment Verification**: Post-deployment checklists with error pattern analysis
+- **Redeploy Workflows**: Enhanced redeploy commands and verification procedures
 
 ## Key Improvements Made
 
@@ -120,12 +127,16 @@ These rules are optimized for:
 - **Feature Flag System**: Redis-based centralized feature management with CLI tools
 - **FAL Media Tool**: Now enabled by default for all agents (not just "Suna" agent)
 
-### Railway Integration (New)
+### Railway Integration (Updated)
 - **Railway Deployment Rules**: Complete deployment strategy for Railway platform
 - **Railway Testing Rules**: Comprehensive testing workflow for Railway deployments
 - **API Endpoint Fixes**: Resolved 404 errors with proper `/api` prefix usage
 - **Environment Configuration**: Production-ready environment variable setup
 - **Monitoring & Debugging**: Railway CLI commands and troubleshooting guides
+- **Enhanced Error Testing**: 404 error detection, authentication testing, CORS debugging
+- **Redeploy Commands**: Force redeployment workflows with `npx @railway/cli redeploy`
+- **Real-time Monitoring**: Log monitoring for error patterns and resolution workflows
+- **Post-Deployment Verification**: Comprehensive checklists with error pattern analysis
 
 ### Previously Updated
 - Docker command syntax modernization (`docker compose` vs `docker-compose`)

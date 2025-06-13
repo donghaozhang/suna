@@ -3,6 +3,7 @@ import { useAuth } from '@/components/AuthProvider';
 import { fileQueryKeys } from './use-file-queries';
 import { FileCache } from '@/hooks/use-cached-file';
 import { toast } from 'sonner';
+import { getApiUrl } from '@/lib/api';
 // Import the normalizePath function from use-file-queries
 function normalizePath(path: string): string {
   if (!path) return '/';
@@ -25,8 +26,6 @@ function normalizePath(path: string): string {
   
   return path;
 }
-
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
 
 /**
  * Hook for uploading files
@@ -53,7 +52,7 @@ export function useFileUpload() {
       formData.append('file', file);
       formData.append('path', targetPath);
 
-      const response = await fetch(`${API_URL}/sandboxes/${sandboxId}/files`, {
+      const response = await fetch(getApiUrl(`/sandboxes/${sandboxId}/files`), {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${session.access_token}`,
@@ -109,7 +108,7 @@ export function useFileDelete() {
       }
 
       const response = await fetch(
-        `${API_URL}/sandboxes/${sandboxId}/files?path=${encodeURIComponent(filePath)}`,
+        getApiUrl(`/sandboxes/${sandboxId}/files?path=${encodeURIComponent(filePath)}`),
         {
           method: 'DELETE',
           headers: {
@@ -213,7 +212,7 @@ export function useFileCreate() {
         throw new Error('No access token available');
       }
 
-      const response = await fetch(`${API_URL}/sandboxes/${sandboxId}/files`, {
+      const response = await fetch(getApiUrl(`/sandboxes/${sandboxId}/files`), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,

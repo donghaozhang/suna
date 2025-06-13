@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/client';
 import { handleApiError, handleNetworkError, ErrorContext, ApiError } from './error-handler';
-
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
+import { getApiUrl } from '@/lib/api';
 
 export interface ApiClientOptions {
   showErrors?: boolean;
@@ -224,20 +223,20 @@ export const supabaseClient = {
 
 export const backendApi = {
   get: <T = any>(endpoint: string, options?: Omit<RequestInit & ApiClientOptions, 'method' | 'body'>) =>
-    apiClient.get<T>(`${API_URL}${endpoint}`, options),
+    apiClient.get<T>(getApiUrl(endpoint), options),
 
   post: <T = any>(endpoint: string, data?: any, options?: Omit<RequestInit & ApiClientOptions, 'method'>) =>
-    apiClient.post<T>(`${API_URL}${endpoint}`, data, options),
+    apiClient.post<T>(getApiUrl(endpoint), data, options),
 
   put: <T = any>(endpoint: string, data?: any, options?: Omit<RequestInit & ApiClientOptions, 'method'>) =>
-    apiClient.put<T>(`${API_URL}${endpoint}`, data, options),
+    apiClient.put<T>(getApiUrl(endpoint), data, options),
 
   patch: <T = any>(endpoint: string, data?: any, options?: Omit<RequestInit & ApiClientOptions, 'method'>) =>
-    apiClient.patch<T>(`${API_URL}${endpoint}`, data, options),
+    apiClient.patch<T>(getApiUrl(endpoint), data, options),
 
   delete: <T = any>(endpoint: string, options?: Omit<RequestInit & ApiClientOptions, 'method' | 'body'>) =>
-    apiClient.delete<T>(`${API_URL}${endpoint}`, options),
+    apiClient.delete<T>(getApiUrl(endpoint), options),
 
   upload: <T = any>(endpoint: string, formData: FormData, options?: Omit<RequestInit & ApiClientOptions, 'method' | 'body'>) =>
-    apiClient.upload<T>(`${API_URL}${endpoint}`, formData, options),
+    apiClient.upload<T>(getApiUrl(endpoint), formData, options),
 }; 

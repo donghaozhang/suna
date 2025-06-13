@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+import { getApiUrl } from '@/lib/api';
 
 export type Thread = {
     thread_id: string;
@@ -89,7 +88,7 @@ const deleteSandbox = async (sandboxId: string): Promise<void> => {
       headers['Authorization'] = `Bearer ${session.access_token}`;
     }
 
-    const response = await fetch(`${API_URL}/sandboxes/${sandboxId}`, {
+    const response = await fetch(getApiUrl(`/sandboxes/${sandboxId}`), {
       method: 'DELETE',
       headers,
     });
@@ -297,7 +296,7 @@ export const getPublicProjects = async (): Promise<Project[]> => {
   
             console.log(`Ensuring sandbox is active for project ${projectId}...`);
             const response = await fetch(
-              `${API_URL}/project/${projectId}/sandbox/ensure-active`,
+              getApiUrl(`/project/${projectId}/sandbox/ensure-active`),
               {
                 method: 'POST',
                 headers,
