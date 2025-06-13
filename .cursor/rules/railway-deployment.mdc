@@ -1,6 +1,6 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: false
 ---
 # Railway Deployment Rules
@@ -66,57 +66,56 @@ Same as Backend Service (shared codebase).
 
 ### Project Setup
 ```bash
-# Install and login
-npm install -g @railway/cli
-railway login
+# Use npx (recommended - avoids PATH issues)
+npx @railway/cli login
 
 # Initialize project
-railway init
+npx @railway/cli init
 
 # Link existing project
-railway link
+npx @railway/cli link
 ```
 
 ### Deployment Commands
 ```bash
 # Deploy all services
-railway up
+npx @railway/cli up
 
 # Deploy specific service
-railway up --service backend
-railway up --service frontend
-railway up --service worker
+npx @railway/cli up --service backend
+npx @railway/cli up --service frontend
+npx @railway/cli up --service worker
 
 # Redeploy service
-railway redeploy --service backend
+npx @railway/cli redeploy --service backend
 ```
 
 ### Service Management
 ```bash
 # Add services
-railway add redis
-railway add rabbitmq
+npx @railway/cli add redis
+npx @railway/cli add rabbitmq
 
 # View services
-railway ps
-railway status
+npx @railway/cli ps
+npx @railway/cli status
 
 # Get service URLs
-railway domain
+npx @railway/cli domain
 ```
 
 ### Monitoring & Debugging
 ```bash
 # View logs
-railway logs --service backend
-railway logs --service frontend --follow
+npx @railway/cli logs --service backend
+npx @railway/cli logs --service frontend --follow
 
 # Environment variables
-railway variables
-railway variables set KEY=value
+npx @railway/cli variables
+npx @railway/cli variables set KEY=value
 
 # Service shell access
-railway shell --service backend
+npx @railway/cli shell --service backend
 ```
 
 ## Deployment Workflow
@@ -124,12 +123,12 @@ railway shell --service backend
 ### 1. Initial Setup
 ```bash
 # Create Railway project
-railway init
+npx @railway/cli init
 
 # Configure services in railway.toml
 # Deploy infrastructure services
-railway add redis
-railway add rabbitmq
+npx @railway/cli add redis
+npx @railway/cli add rabbitmq
 ```
 
 ### 2. Environment Configuration
@@ -368,3 +367,8 @@ railway rollback --service backend
 - Keep current email service configurations
 - Preserve existing file storage setups
 - Continue using current monitoring tools
+
+
+
+
+

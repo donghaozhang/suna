@@ -1,6 +1,6 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: false
 ---
 # Railway Testing Rules
@@ -105,40 +105,40 @@ curl https://your-backend-url.railway.app/api/billing/subscription
 ### Deployment Monitoring
 ```bash
 # Watch deployment logs in real-time
-railway logs --service backend --follow
-railway logs --service frontend --follow
+npx @railway/cli logs --service backend --follow
+npx @railway/cli logs --service frontend --follow
 
 # Check deployment status
 railway status
 railway ps
 
 # View recent deployments
-railway deployments
+npx @railway/cli deployments
 ```
 
 ### Service Health Verification
 ```bash
 # Check all services are running
-railway ps
+npx @railway/cli ps
 
 # Get service URLs for testing
-railway domain
+npx @railway/cli domain
 
 # View environment variables
-railway variables --service backend
-railway variables --service frontend
+npx @railway/cli variables --service backend
+npx @railway/cli variables --service frontend
 ```
 
 ### Debugging Commands
 ```bash
 # Connect to service shell for debugging
-railway shell --service backend
+npx @railway/cli shell --service backend
 
 # Check specific deployment logs
-railway logs --deployment DEPLOYMENT_ID
+npx @railway/cli logs --deployment DEPLOYMENT_ID
 
 # Redeploy if needed
-railway redeploy --service backend
+npx @railway/cli redeploy --service backend
 ```
 
 ## Automated Testing Script
@@ -300,7 +300,7 @@ curl -X POST https://your-backend.railway.app/api/agent/initiate  # Missing data
 ### Debugging Failed Tests
 ```bash
 # Check service logs for errors
-railway logs --service backend | grep ERROR
+npx @railway/cli logs --service backend | grep ERROR
 
 # Verify environment variables
 railway variables --service backend | grep -E "(SUPABASE|API)"
@@ -445,3 +445,9 @@ jobs:
 - Use Railway's collaboration features for team testing
 - Coordinate testing schedules to avoid conflicts
 - Maintain shared testing documentation and procedures
+
+
+
+
+
+
