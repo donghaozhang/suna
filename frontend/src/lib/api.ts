@@ -1647,129 +1647,45 @@ export const createCheckoutSession = async (
 export const createPortalSession = async (
   request: CreatePortalSessionRequest,
 ): Promise<{ url: string }> => {
-  try {
-    const supabase = createClient();
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session?.access_token) {
-      throw new NoAccessTokenAvailableError();
-    }
-
-    const response = await fetch(getApiUrl('/billing/create-portal-session'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify(request),
-    });
-
-    if (!response.ok) {
-      const errorText = await response
-        .text()
-        .catch(() => 'No error details available');
-      console.error(
-        `Error creating portal session: ${response.status} ${response.statusText}`,
-        errorText,
-      );
-      throw new Error(
-        `Error creating portal session: ${response.statusText} (${response.status})`,
-      );
-    }
-
-    return response.json();
-  } catch (error) {
-    console.error('Failed to create portal session:', error);
-    handleApiError(error, { operation: 'create portal session', resource: 'billing portal' });
-    throw error;
-  }
+  // MOCK: Return mock portal session to prevent 404 errors
+  console.log('[BILLING] Portal session disabled - billing disabled, return_url:', request.return_url);
+  return { url: '#' };
 };
 
 
 export const getSubscription = async (): Promise<SubscriptionStatus> => {
-  try {
-    const supabase = createClient();
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session?.access_token) {
-      throw new NoAccessTokenAvailableError();
-    }
-
-    const response = await fetch(getApiUrl('/billing/subscription'), {
-      headers: {
-        Authorization: `Bearer ${session.access_token}`,
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response
-        .text()
-        .catch(() => 'No error details available');
-      console.error(
-        `Error getting subscription: ${response.status} ${response.statusText}`,
-        errorText,
-      );
-      throw new Error(
-        `Error getting subscription: ${response.statusText} (${response.status})`,
-      );
-    }
-
-    return response.json();
-  } catch (error) {
-    if (error instanceof NoAccessTokenAvailableError) {
-      throw error;
-    }
-
-    console.error('Failed to get subscription:', error);
-    handleApiError(error, { operation: 'load subscription', resource: 'billing information' });
-    throw error;
-  }
+  // MOCK: Return mock subscription data to prevent 404 errors
+  console.log('[BILLING] Using mock subscription data from main API - billing disabled');
+  return {
+    status: 'active',
+    plan_name: 'free',
+    price_id: 'free',
+    current_period_end: null,
+    cancel_at_period_end: false,
+    trial_end: null,
+    minutes_limit: 999999,
+    current_usage: 0,
+    has_schedule: false,
+    scheduled_plan_name: null,
+    scheduled_price_id: null,
+    scheduled_change_date: null,
+  };
 };
 
 export const getAvailableModels = async (): Promise<AvailableModelsResponse> => {
-  try {
-    const supabase = createClient();
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session?.access_token) {
-      throw new NoAccessTokenAvailableError();
-    }
-
-    const response = await fetch(getApiUrl('/billing/available-models'), {
-      headers: {
-        Authorization: `Bearer ${session.access_token}`,
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response
-        .text()
-        .catch(() => 'No error details available');
-      console.error(
-        `Error getting available models: ${response.status} ${response.statusText}`,
-        errorText,
-      );
-      throw new Error(
-        `Error getting available models: ${response.statusText} (${response.status})`,
-      );
-    }
-
-    return response.json();
-  } catch (error) {
-    if (error instanceof NoAccessTokenAvailableError) {
-      throw error;
-    }
-
-    console.error('Failed to get available models:', error);
-    handleApiError(error, { operation: 'load available models', resource: 'AI models' });
-    throw error;
-  }
+  // MOCK: Return mock available models to prevent 404 errors
+  console.log('[BILLING] Using mock available models data - billing disabled');
+  return {
+    models: [
+      { id: 'gpt-4o', display_name: 'GPT-4o', short_name: 'GPT-4o', requires_subscription: false },
+      { id: 'gpt-4o-mini', display_name: 'GPT-4o Mini', short_name: 'GPT-4o Mini', requires_subscription: false },
+      { id: 'claude-3-5-sonnet-20241022', display_name: 'Claude 3.5 Sonnet', short_name: 'Claude 3.5 Sonnet', requires_subscription: false },
+      { id: 'o1-preview', display_name: 'OpenAI o1 Preview', short_name: 'o1 Preview', requires_subscription: false },
+      { id: 'o1-mini', display_name: 'OpenAI o1 Mini', short_name: 'o1 Mini', requires_subscription: false },
+    ],
+    subscription_tier: 'free',
+    total_models: 5,
+  };
 };
 
 

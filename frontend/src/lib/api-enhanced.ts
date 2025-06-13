@@ -374,60 +374,67 @@ export const agentApi = {
 
 export const billingApi = {
   async getSubscription(): Promise<SubscriptionStatus | null> {
-    const result = await backendApi.get(
-      '/billing/subscription',
-      {
-        errorContext: { operation: 'load subscription', resource: 'billing information' },
-      }
-    );
-
-    return result.data || null;
+    // MOCK: Return mock subscription data to prevent 404 errors
+    console.log('[BILLING] Using mock subscription data from enhanced API - billing disabled');
+    return {
+      status: 'active',
+      plan_name: 'free',
+      price_id: 'free',
+      current_period_end: null,
+      cancel_at_period_end: false,
+      trial_end: null,
+      minutes_limit: 999999,
+      current_usage: 0,
+      has_schedule: false,
+      scheduled_plan_name: null,
+      scheduled_price_id: null,
+      scheduled_change_date: null,
+    };
   },
 
   async checkStatus(): Promise<BillingStatusResponse | null> {
-    const result = await backendApi.get(
-      '/billing/status',
-      {
-        errorContext: { operation: 'check billing status', resource: 'account status' },
-      }
-    );
-
-    return result.data || null;
+    // MOCK: Return mock billing status to prevent 404 errors
+    console.log('[BILLING] Using mock billing status - billing disabled');
+    return {
+      can_run: true,
+      message: 'Billing disabled - unlimited usage',
+      subscription: {
+        price_id: 'free',
+        plan_name: 'free',
+        minutes_limit: 999999,
+      },
+    };
   },
 
   async createCheckoutSession(request: CreateCheckoutSessionRequest): Promise<CreateCheckoutSessionResponse | null> {
-    const result = await backendApi.post(
-      '/billing/create-checkout-session',
-      request,
-      {
-        errorContext: { operation: 'create checkout session', resource: 'billing' },
-      }
-    );
-
-    return result.data || null;
+    // MOCK: Return mock checkout session to prevent 404 errors
+    console.log('[BILLING] Checkout session disabled - billing disabled');
+    return {
+      status: 'no_change',
+      message: 'Billing disabled - no checkout needed',
+    };
   },
 
   async createPortalSession(request: CreatePortalSessionRequest): Promise<{ url: string } | null> {
-    const result = await backendApi.post(
-      '/billing/create-portal-session',
-      request,
-      {
-        errorContext: { operation: 'create portal session', resource: 'billing portal' },
-      }
-    );
-
-    return result.data || null;
+    // MOCK: Return mock portal session to prevent 404 errors
+    console.log('[BILLING] Portal session disabled - billing disabled');
+    return { url: '#' };
   },
 
   async getAvailableModels(): Promise<AvailableModelsResponse | null> {
-    const result = await backendApi.get(
-      '/billing/available-models',
-      {
-        errorContext: { operation: 'load available models', resource: 'AI models' },
-      }
-    );
-
-    return result.data || null;
+    // MOCK: Return mock available models to prevent 404 errors
+    console.log('[BILLING] Using mock available models from enhanced API - billing disabled');
+    return {
+      models: [
+        { id: 'gpt-4o', display_name: 'GPT-4o', short_name: 'GPT-4o', requires_subscription: false },
+        { id: 'gpt-4o-mini', display_name: 'GPT-4o Mini', short_name: 'GPT-4o Mini', requires_subscription: false },
+        { id: 'claude-3-5-sonnet-20241022', display_name: 'Claude 3.5 Sonnet', short_name: 'Claude 3.5 Sonnet', requires_subscription: false },
+        { id: 'o1-preview', display_name: 'OpenAI o1 Preview', short_name: 'o1 Preview', requires_subscription: false },
+        { id: 'o1-mini', display_name: 'OpenAI o1 Mini', short_name: 'o1 Mini', requires_subscription: false },
+      ],
+      subscription_tier: 'free',
+      total_models: 5,
+    };
   },
 };
 
