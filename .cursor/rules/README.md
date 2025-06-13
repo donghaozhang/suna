@@ -47,6 +47,24 @@ This directory contains updated and streamlined cursor rules for the Suna projec
 #### 7. database-supabase.mdc
 **Status**: Maintained as-is (concise at 411 lines)
 
+#### 8. railway-deployment.mdc
+**New File**: Comprehensive Railway deployment rules
+- **Service Architecture**: Frontend, Backend, Worker, Redis, RabbitMQ configuration
+- **Environment Variables**: Complete configuration for all services
+- **Railway CLI Commands**: Project setup, deployment, monitoring, debugging
+- **Security Configuration**: Environment security, network security, database security
+- **Cost Optimization**: Pricing strategy and resource optimization
+- **Production Checklist**: Pre/post deployment verification steps
+
+#### 9. railway-testing.mdc
+**New File**: Railway testing strategy and workflow rules
+- **Testing Strategy**: Branch-based testing approach with auto-deployment
+- **API Testing**: Health checks, authentication, endpoint testing checklists
+- **Frontend Testing**: Browser testing workflow and user flow verification
+- **Automated Testing**: Node.js testing scripts and integration testing
+- **Performance Testing**: Load testing and frontend performance measurement
+- **Regression Testing**: API and frontend regression test suites
+
 ## Key Improvements Made
 
 ### Infrastructure Enhancements
@@ -101,6 +119,13 @@ These rules are optimized for:
 - **Testing Infrastructure**: Organized `backend/tests/` directory with comprehensive documentation
 - **Feature Flag System**: Redis-based centralized feature management with CLI tools
 - **FAL Media Tool**: Now enabled by default for all agents (not just "Suna" agent)
+
+### Railway Integration (New)
+- **Railway Deployment Rules**: Complete deployment strategy for Railway platform
+- **Railway Testing Rules**: Comprehensive testing workflow for Railway deployments
+- **API Endpoint Fixes**: Resolved 404 errors with proper `/api` prefix usage
+- **Environment Configuration**: Production-ready environment variable setup
+- **Monitoring & Debugging**: Railway CLI commands and troubleshooting guides
 
 ### Previously Updated
 - Docker command syntax modernization (`docker compose` vs `docker-compose`)

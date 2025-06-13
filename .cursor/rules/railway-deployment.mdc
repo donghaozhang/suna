@@ -1,0 +1,370 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Railway Deployment Rules
+
+## Railway Platform Configuration
+
+### Service Architecture
+```
+Frontend (Next.js) ←→ Backend (FastAPI) ←→ Worker (Dramatiq)
+     ↓                      ↓                    ↓
+  Supabase            Redis Cache         RabbitMQ Queue
+```
+
+### Required Services
+- **Frontend**: Next.js application (Port 3000)
+- **Backend**: FastAPI server (Port 8000) 
+- **Worker**: Dramatiq background tasks
+- **Redis**: Caching and session storage
+- **RabbitMQ**: Message queue for background tasks
+- **Supabase**: External database (existing setup)
+
+## Environment Variables Configuration
+
+### Backend Service Variables
+```env
+# Database (Required)
+SUPABASE_URL=https://xvhreblsabiwgfkykvvn.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+
+# LLM Providers (At least one required)
+ANTHROPIC_API_KEY=your_anthropic_key
+OPENAI_API_KEY=your_openai_key
+
+# Railway Auto-configured
+REDIS_HOST=${{Redis.RAILWAY_PRIVATE_DOMAIN}}
+REDIS_PORT=${{Redis.RAILWAY_PRIVATE_PORT}}
+RABBITMQ_HOST=${{RabbitMQ.RAILWAY_PRIVATE_DOMAIN}}
+RABBITMQ_PORT=${{RabbitMQ.RAILWAY_PRIVATE_PORT}}
+
+# Environment
+ENV_MODE=production
+```
+
+### Frontend Service Variables
+```env
+# Required
+NEXT_PUBLIC_SUPABASE_URL=https://xvhreblsabiwgfkykvvn.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# Railway URLs (Update after deployment)
+NEXT_PUBLIC_BACKEND_URL=https://your-backend-service.railway.app/api
+NEXT_PUBLIC_URL=https://your-frontend-service.railway.app
+
+# Environment
+NEXT_PUBLIC_ENV_MODE=production
+```
+
+### Worker Service Variables
+Same as Backend Service (shared codebase).
+
+## Railway CLI Commands
+
+### Project Setup
+```bash
+# Install and login
+npm install -g @railway/cli
+railway login
+
+# Initialize project
+railway init
+
+# Link existing project
+railway link
+```
+
+### Deployment Commands
+```bash
+# Deploy all services
+railway up
+
+# Deploy specific service
+railway up --service backend
+railway up --service frontend
+railway up --service worker
+
+# Redeploy service
+railway redeploy --service backend
+```
+
+### Service Management
+```bash
+# Add services
+railway add redis
+railway add rabbitmq
+
+# View services
+railway ps
+railway status
+
+# Get service URLs
+railway domain
+```
+
+### Monitoring & Debugging
+```bash
+# View logs
+railway logs --service backend
+railway logs --service frontend --follow
+
+# Environment variables
+railway variables
+railway variables set KEY=value
+
+# Service shell access
+railway shell --service backend
+```
+
+## Deployment Workflow
+
+### 1. Initial Setup
+```bash
+# Create Railway project
+railway init
+
+# Configure services in railway.toml
+# Deploy infrastructure services
+railway add redis
+railway add rabbitmq
+```
+
+### 2. Environment Configuration
+- Set all required environment variables in Railway Dashboard
+- Configure service-to-service communication
+- Update frontend URLs after backend deployment
+
+### 3. Service Deployment Order
+1. **Infrastructure**: Redis, RabbitMQ
+2. **Backend**: FastAPI application
+3. **Worker**: Background task processor
+4. **Frontend**: Next.js application
+
+### 4. Post-Deployment
+- Update `NEXT_PUBLIC_BACKEND_URL` with actual backend URL
+- Update `NEXT_PUBLIC_URL` with actual frontend URL
+- Test all service endpoints
+- Verify health checks
+
+## Railway Configuration Files
+
+### railway.toml
+```toml
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+[[services]]
+name = "backend"
+source = "backend/"
+
+[[services]]
+name = "frontend" 
+source = "frontend/"
+
+[[services]]
+name = "worker"
+source = "backend/"
+```
+
+### Service-Specific Dockerfiles
+- **Backend**: `Dockerfile.backend` - FastAPI with health checks
+- **Frontend**: `Dockerfile.frontend` - Next.js with static optimization
+- **Worker**: `Dockerfile.worker` - Dramatiq background processor
+
+## Cost Optimization
+
+### Railway Pricing Strategy
+- **Hobby Plan**: $5/month per service (first service free)
+- **Resource Limits**: 512MB RAM, 1 vCPU per service
+- **Estimated Monthly Cost**: ~$20/month for full stack
+
+### Cost-Effective Configuration
+```bash
+# Use shared Redis for multiple services
+REDIS_URL=${{Redis.RAILWAY_PRIVATE_URL}}
+
+# Optimize Docker images for faster builds
+# Use multi-stage builds to reduce image size
+# Configure proper health checks to prevent unnecessary restarts
+```
+
+## Security Configuration
+
+### Environment Security
+- All environment variables encrypted at rest
+- Use Railway's secret management
+- Never commit sensitive keys to repository
+- Rotate API keys regularly
+
+### Network Security
+```env
+# Configure CORS for production
+CORS_ORIGINS=https://your-frontend-service.railway.app
+
+# Use Railway's internal networking
+REDIS_HOST=${{Redis.RAILWAY_PRIVATE_DOMAIN}}
+RABBITMQ_HOST=${{RabbitMQ.RAILWAY_PRIVATE_DOMAIN}}
+```
+
+### Database Security
+- Keep Supabase service role key secure
+- Use Row Level Security (RLS) policies
+- Configure proper authentication flows
+- Monitor database access logs
+
+## Health Checks & Monitoring
+
+### Health Check Endpoints
+```python
+# Backend health check
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "ok",
+        "timestamp": datetime.now().isoformat(),
+        "instance_id": os.getenv("RAILWAY_INSTANCE_ID", "unknown")
+    }
+```
+
+### Monitoring Commands
+```bash
+# Check service health
+curl https://your-backend-service.railway.app/api/health
+
+# Monitor logs in real-time
+railway logs --service backend --follow
+
+# Check deployment status
+railway status
+```
+
+### Alerting Setup
+- Configure Railway webhooks for deployment notifications
+- Set up log-based alerts for error patterns
+- Monitor service uptime and response times
+- Track resource usage and scaling needs
+
+## Troubleshooting Common Issues
+
+### Build Failures
+```bash
+# Check build logs
+railway logs --deployment DEPLOYMENT_ID
+
+# Common fixes
+- Verify Dockerfile syntax
+- Check dependency versions
+- Ensure all required files are included
+- Validate environment variable references
+```
+
+### Runtime Errors
+```bash
+# Service not starting
+railway logs --service backend
+
+# Common causes
+- Missing environment variables
+- Database connection failures
+- Port binding issues
+- Health check failures
+```
+
+### Network Issues
+```bash
+# Service communication problems
+railway variables --service backend
+
+# Verify internal URLs
+- Use Railway private domains for service-to-service communication
+- Check CORS configuration for frontend-backend communication
+- Validate environment variable interpolation
+```
+
+## Production Checklist
+
+### Pre-Deployment
+- [ ] All environment variables configured
+- [ ] Supabase credentials verified
+- [ ] LLM API keys tested
+- [ ] Docker builds successful locally
+- [ ] Health checks implemented
+
+### Post-Deployment
+- [ ] All services running
+- [ ] Health endpoints responding
+- [ ] Frontend-backend communication working
+- [ ] Database connections established
+- [ ] Background tasks processing
+- [ ] Logs showing no errors
+
+### Performance Verification
+- [ ] API response times acceptable
+- [ ] Frontend loading quickly
+- [ ] Database queries optimized
+- [ ] Redis caching working
+- [ ] Worker tasks completing
+
+## Scaling Considerations
+
+### Horizontal Scaling
+```bash
+# Scale services based on load
+railway scale --service backend --replicas 2
+railway scale --service worker --replicas 3
+```
+
+### Resource Optimization
+- Monitor CPU and memory usage
+- Optimize Docker image sizes
+- Use Railway's auto-scaling features
+- Configure proper resource limits
+
+### Database Scaling
+- Monitor Supabase usage and limits
+- Optimize database queries
+- Use Redis for caching frequently accessed data
+- Consider read replicas for high-traffic scenarios
+
+## Backup & Recovery
+
+### Data Backup Strategy
+- Supabase handles database backups automatically
+- Export critical configuration data regularly
+- Document environment variable configurations
+- Maintain deployment scripts and configurations
+
+### Disaster Recovery
+```bash
+# Quick rollback to previous deployment
+railway rollback --service backend
+
+# Restore from backup
+- Use Supabase point-in-time recovery
+- Redeploy from known good commit
+- Restore environment variables from documentation
+```
+
+## Integration with Existing Infrastructure
+
+### Supabase Integration
+- No changes required to existing Supabase setup
+- Use existing database schema and data
+- Maintain current authentication flows
+- Keep existing API keys and configurations
+
+### External Services
+- Maintain existing LLM provider integrations
+- Keep current email service configurations
+- Preserve existing file storage setups
+- Continue using current monitoring tools
