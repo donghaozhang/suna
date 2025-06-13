@@ -109,4 +109,4 @@ Write-Host ""
 Write-Host "🔍 Monitor deployment:" -ForegroundColor Magenta
 Write-Host "  railway logs --service backend"
 Write-Host "  railway logs --service frontend"
-Write-Host "  railway logs --service worker" 
+Write-Host "  railway logs --service worker"
