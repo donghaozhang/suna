@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import { isFlagEnabled } from "@/lib/feature-flags";
-import { getApiUrl } from "@/lib/api";
+import { getApiUrl } from "@/lib/utils/getApiUrl";
 
 export type Agent = {
   agent_id: string;

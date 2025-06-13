@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import { getApiUrl } from '@/lib/api';
+import { getApiUrl } from '@/lib/utils/getApiUrl';
 
 export type Thread = {
     thread_id: string;

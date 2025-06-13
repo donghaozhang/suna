@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@/lib/supabase/client';
 import { isFlagEnabled } from '@/lib/feature-flags';
-import { getApiUrl } from '@/lib/api';
+import { getApiUrl } from '@/lib/utils/getApiUrl';
 
 export interface MarketplaceAgent {
   agent_id: string;

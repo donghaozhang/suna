@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/client';
 import { handleApiError, handleNetworkError, ErrorContext, ApiError } from './error-handler';
-import { getApiUrl } from '@/lib/api';
+import { getApiUrl } from '@/lib/utils/getApiUrl';
 
 export interface ApiClientOptions {
   showErrors?: boolean;

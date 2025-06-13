@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { createClient } from '@/lib/supabase/client';
-import { getApiUrl } from '@/lib/api';
+import { getApiUrl } from '@/lib/utils/getApiUrl';
 
 interface MCPServer {
   qualifiedName: string;

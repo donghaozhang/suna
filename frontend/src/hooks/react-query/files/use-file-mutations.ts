@@ -3,7 +3,7 @@ import { useAuth } from '@/components/AuthProvider';
 import { fileQueryKeys } from './use-file-queries';
 import { FileCache } from '@/hooks/use-cached-file';
 import { toast } from 'sonner';
-import { getApiUrl } from '@/lib/api';
+import { getApiUrl } from '@/lib/utils/getApiUrl';
 // Import the normalizePath function from use-file-queries
 function normalizePath(path: string): string {
   if (!path) return '/';
