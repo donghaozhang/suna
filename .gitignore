@@ -199,6 +199,10 @@ rabbitmq_data
 
 .setup_env.json
 
+# Railway deployment files with sensitive data
+backend/.env.railway
+frontend/.env.railway
+
 # fal.ai testing
 backend/fal_testing/images/fal_generated_*.png
 backend/fal_testing/images/fal_generated_*.jpg

@@ -1,0 +1,49 @@
+[build]
+builder = "dockerfile"
+
+[deploy]
+restartPolicyType = "always"
+
+# Backend API Service
+[[services]]
+name = "backend"
+source = "backend"
+
+[services.variables]
+ENV_MODE = "production"
+REDIS_HOST = "${{Redis.RAILWAY_PRIVATE_DOMAIN}}"
+REDIS_PORT = "${{Redis.RAILWAY_PRIVATE_PORT}}"
+RABBITMQ_HOST = "${{RabbitMQ.RAILWAY_PRIVATE_DOMAIN}}"
+RABBITMQ_PORT = "${{RabbitMQ.RAILWAY_PRIVATE_PORT}}"
+
+# Background Worker Service
+[[services]]
+name = "worker"
+source = "backend"
+startCommand = "python -m dramatiq run_agent_background"
+
+[services.variables]
+ENV_MODE = "production"
+REDIS_HOST = "${{Redis.RAILWAY_PRIVATE_DOMAIN}}"
+REDIS_PORT = "${{Redis.RAILWAY_PRIVATE_PORT}}"
+RABBITMQ_HOST = "${{RabbitMQ.RAILWAY_PRIVATE_DOMAIN}}"
+RABBITMQ_PORT = "${{RabbitMQ.RAILWAY_PRIVATE_PORT}}"
+
+# Frontend Service
+[[services]]
+name = "frontend"
+source = "frontend"
+
+[services.variables]
+NEXT_PUBLIC_ENV_MODE = "production"
+NEXT_PUBLIC_BACKEND_URL = "https://${{backend.RAILWAY_PUBLIC_DOMAIN}}/api"
+
+# Redis Service
+[[services]]
+name = "redis"
+image = "redis:7-alpine"
+
+# RabbitMQ Service
+[[services]]
+name = "rabbitmq"
+image = "rabbitmq:3-management" 
