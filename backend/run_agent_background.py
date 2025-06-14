@@ -43,8 +43,7 @@ else:
     rabbitmq_broker = RabbitmqBroker(
         host=rabbitmq_host, 
         port=rabbitmq_port,
-        username=rabbitmq_user,
-        password=rabbitmq_pass,
+        credentials={"username": rabbitmq_user, "password": rabbitmq_pass},
         middleware=[dramatiq.middleware.AsyncIO()]
     )
     logger.info(f"Using individual RabbitMQ env vars for connection to {rabbitmq_host}:{rabbitmq_port}")
