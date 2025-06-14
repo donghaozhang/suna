@@ -17,6 +17,7 @@ import os
 from services.langfuse import langfuse
 from utils.retry import retry
 from urllib.parse import urlparse
+import pika
 
 # Configure RabbitMQ connection
 rabbitmq_url = os.getenv('RABBITMQ_URL')
@@ -43,7 +44,7 @@ else:
     rabbitmq_broker = RabbitmqBroker(
         host=rabbitmq_host, 
         port=rabbitmq_port,
-        credentials={"username": rabbitmq_user, "password": rabbitmq_pass},
+        credentials=pika.PlainCredentials(rabbitmq_user, rabbitmq_pass),
         middleware=[dramatiq.middleware.AsyncIO()]
     )
     logger.info(f"Using individual RabbitMQ env vars for connection to {rabbitmq_host}:{rabbitmq_port}")
