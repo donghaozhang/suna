@@ -103,9 +103,7 @@ export const WorkspaceFileView: React.FC<WorkspaceFileViewProps> = ({ filePath }
       return <PdfRenderer url={fileUrl} />;
     }
     if (isText(mimeType)) {
-      // Extract language from file extension for syntax highlighting
-      const language = filePath.split('.').pop()?.toLowerCase() || '';
-      return <CodeRenderer content={fileContent || ''} language={language} />;
+      return <CodeRenderer content={fileContent || ''} filePath={filePath} />;
     }
     
     return (

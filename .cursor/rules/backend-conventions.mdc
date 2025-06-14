@@ -31,11 +31,28 @@ app = FastAPI(
 # Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure for production
+    allow_origins=get_cors_origins(),  # Dynamic CORS configuration
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+def get_cors_origins():
+    """Get CORS origins with cloud deployment support"""
+    origins = [
+        "http://localhost:3000",  # Local development
+        "http://localhost:3001",  # Alternative local port
+    ]
+    
+    # Add frontend URL from environment
+    frontend_url = os.getenv("FRONTEND_URL")
+    if frontend_url:
+        origins.append(frontend_url)
+    
+    # Add Railway wildcard support for cloud deployment
+    origins.append(r"https://.*\.up\.railway\.app")
+    
+    return origins
 
 # Include routers
 app.include_router(agent_router, prefix="/api/agents", tags=["agents"])
@@ -78,6 +95,60 @@ async def create_agent(
             detail=str(e)
         )
 ```
+
+## Environment Configuration
+
+### Dual Configuration Support
+Support both local development and cloud deployment with automatic fallback:
+
+```python
+import os
+from typing import Optional
+
+def get_redis_connection():
+    """Get Redis connection with cloud/local fallback"""
+    # Try cloud URL first
+    redis_url = os.getenv('REDIS_URL')
+    if redis_url:
+        return redis.from_url(redis_url)
+    
+    # Fallback to individual variables
+    return redis.Redis(
+        host=os.getenv('REDIS_HOST', 'localhost'),
+        port=int(os.getenv('REDIS_PORT', 6379)),
+        db=int(os.getenv('REDIS_DB', 0)),
+        password=os.getenv('REDIS_PASSWORD')
+    )
+
+def get_rabbitmq_connection():
+    """Get RabbitMQ connection with cloud/local fallback"""
+    import pika
+    
+    # Try cloud URL first
+    rabbitmq_url = os.getenv('RABBITMQ_URL')
+    if rabbitmq_url:
+        return pika.BlockingConnection(pika.URLParameters(rabbitmq_url))
+    
+    # Fallback to individual variables
+    credentials = pika.PlainCredentials(
+        os.getenv('RABBITMQ_USER', 'guest'),
+        os.getenv('RABBITMQ_PASS', 'guest')
+    )
+    
+    parameters = pika.ConnectionParameters(
+        host=os.getenv('RABBITMQ_HOST', 'localhost'),
+        port=int(os.getenv('RABBITMQ_PORT', 5672)),
+        virtual_host=os.getenv('RABBITMQ_VHOST', '/'),
+        credentials=credentials
+    )
+    
+    return pika.BlockingConnection(parameters)
+```
+
+### Environment Variable Priority
+1. **Cloud URLs** (highest): `REDIS_URL`, `RABBITMQ_URL`
+2. **Individual variables** (fallback): `REDIS_HOST`, `RABBITMQ_HOST`, etc.
+3. **Defaults** (lowest): localhost, standard ports
 
 ## Service Layer Architecture
 

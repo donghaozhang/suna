@@ -1,0 +1,414 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Build & Compilation Troubleshooting
+
+## Overview
+
+This guide covers common build and compilation issues encountered during development, particularly TypeScript compilation errors, Windows-specific Node.js issues, and Docker build problems.
+
+## TypeScript Compilation Errors
+
+### Missing Export Errors
+
+#### Problem: `getSupabaseClient` Export Missing
+```
+Module '"@/lib/supabase/client"' has no exported member 'getSupabaseClient'
+```
+
+**Solution**: Add the missing export to `frontend/src/lib/supabase/client.ts`:
+```typescript
+import { createBrowserClient } from '@supabase/ssr'
+
+export function createClient() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}
+
+// Add this export
+export function getSupabaseClient() {
+  return createClient()
+}
+```
+
+#### Problem: `useProject` Hook Missing
+```
+Module '"@/hooks/react-query/threads/use-project"' has no exported member 'useProject'
+```
+
+**Solution**: Create the missing hook in `frontend/src/hooks/react-query/threads/use-project.ts`:
+```typescript
+import { useQuery } from '@tanstack/react-query'
+import { createClient } from '@/lib/supabase/client'
+
+export function useProject(projectId: string) {
+  const supabase = createClient()
+  
+  return useQuery({
+    queryKey: ['project', projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('id', projectId)
+        .single()
+      
+      if (error) throw error
+      return data
+    },
+    enabled: !!projectId,
+  })
+}
+```
+
+### Missing Utility Functions
+
+#### Problem: File Type Utilities Missing
+```
+Module '"@/components/thread/tool-views/utils"' has no exported member 'getMimeType', 'isImage', etc.
+```
+
+**Solution**: Add missing utilities to `frontend/src/components/thread/tool-views/utils.ts`:
+```typescript
+export function getMimeType(filename: string): string {
+  const ext = filename.split('.').pop()?.toLowerCase()
+  
+  const mimeTypes: Record<string, string> = {
+    'txt': 'text/plain',
+    'md': 'text/markdown',
+    'js': 'text/javascript',
+    'ts': 'text/typescript',
+    'json': 'application/json',
+    'html': 'text/html',
+    'css': 'text/css',
+    'py': 'text/x-python',
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'gif': 'image/gif',
+    'pdf': 'application/pdf',
+    'mp3': 'audio/mpeg',
+    'wav': 'audio/wav',
+    'mp4': 'video/mp4',
+    'webm': 'video/webm',
+  }
+  
+  return mimeTypes[ext || ''] || 'application/octet-stream'
+}
+
+export function isImage(filename: string): boolean {
+  const mimeType = getMimeType(filename)
+  return mimeType.startsWith('image/')
+}
+
+export function isVideo(filename: string): boolean {
+  const mimeType = getMimeType(filename)
+  return mimeType.startsWith('video/')
+}
+
+export function isText(filename: string): boolean {
+  const mimeType = getMimeType(filename)
+  return mimeType.startsWith('text/') || 
+         mimeType === 'application/json' ||
+         filename.endsWith('.md') ||
+         filename.endsWith('.tsx') ||
+         filename.endsWith('.jsx')
+}
+
+export function isPdf(filename: string): boolean {
+  return getMimeType(filename) === 'application/pdf'
+}
+
+export function isAudio(filename: string): boolean {
+  const mimeType = getMimeType(filename)
+  return mimeType.startsWith('audio/')
+}
+```
+
+### Component Prop Errors
+
+#### Problem: Invalid Props Passed to Components
+```
+Property 'filePath' does not exist on type 'CodeRendererProps'
+```
+
+**Solution**: Fix prop names in component usage:
+```typescript
+// Wrong
+<CodeRenderer filePath={file.path} content={content} />
+
+// Correct
+<CodeRenderer language={getLanguageFromPath(file.path)} content={content} />
+```
+
+## Windows-Specific Build Issues
+
+### Node.js Process Hanging
+
+#### Problem: Build Process Hangs Indefinitely
+- `npm run build` or `npm run dev` hangs without output
+- Multiple Node.js processes consuming CPU
+- Build never completes
+
+#### Solutions:
+
+**1. Kill Stuck Node Processes**
+```powershell
+# Kill all Node.js processes
+taskkill /F /IM node.exe
+
+# Kill specific processes by PID
+tasklist | findstr node.exe
+taskkill /F /PID <process_id>
+```
+
+**2. Clear Build Cache**
+```bash
+# Clear Next.js cache
+Remove-Item -Recurse -Force .next
+
+# Clear node_modules and reinstall
+Remove-Item -Recurse -Force node_modules
+Remove-Item package-lock.json
+npm install
+```
+
+**3. Use Docker Instead of Local Build**
+```bash
+# More reliable on Windows
+docker compose build frontend
+docker compose up frontend
+```
+
+### PowerShell vs Command Prompt Issues
+
+#### Problem: Commands Behave Differently
+Some npm scripts or commands work in Command Prompt but not PowerShell.
+
+**Solution**: Use Command Prompt for build operations:
+```cmd
+# Open Command Prompt instead of PowerShell
+cmd
+
+# Run build commands
+cd frontend
+npm run build
+```
+
+### File Path Issues
+
+#### Problem: Windows Path Separators
+Build fails due to incorrect path separators in imports or file operations.
+
+**Solution**: Use forward slashes in imports and normalize paths:
+```typescript
+// Use forward slashes in imports
+import { Component } from '@/components/ui/component'
+
+// Normalize paths in file operations
+import path from 'path'
+const normalizedPath = path.normalize(filePath).replace(/\\/g, '/')
+```
+
+## Docker Build Issues
+
+### Build Context Problems
+
+#### Problem: Docker Build Fails with Context Errors
+```
+ERROR: failed to solve: failed to read dockerfile
+```
+
+**Solutions**:
+```bash
+# Ensure correct build context
+docker build -t suna-frontend ./frontend
+docker build -t suna-backend ./backend
+
+# Clear Docker cache
+docker system prune -a -f
+
+# Rebuild without cache
+docker build --no-cache -t suna-frontend ./frontend
+```
+
+### Multi-platform Build Issues
+
+#### Problem: Platform-specific Build Failures
+Build works on one platform but fails on another.
+
+**Solution**: Specify platform explicitly:
+```bash
+# Build for specific platform
+docker build --platform linux/amd64 -t suna-frontend ./frontend
+
+# Multi-platform build
+docker buildx build --platform linux/amd64,linux/arm64 -t suna-frontend ./frontend
+```
+
+### Build Argument Issues
+
+#### Problem: Environment Variables Not Available in Build
+Frontend build fails because environment variables are not passed correctly.
+
+**Solution**: Pass build arguments explicitly:
+```bash
+docker build \
+  --build-arg NEXT_PUBLIC_BACKEND_URL=https://api.example.com \
+  --build-arg NEXT_PUBLIC_SUPABASE_URL=https://project.supabase.co \
+  -t suna-frontend ./frontend
+```
+
+## Memory and Performance Issues
+
+### Out of Memory Errors
+
+#### Problem: Build Fails with OOM
+```
+FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
+```
+
+**Solutions**:
+```bash
+# Increase Node.js memory limit
+export NODE_OPTIONS="--max-old-space-size=4096"
+npm run build
+
+# Or in package.json
+{
+  "scripts": {
+    "build": "NODE_OPTIONS='--max-old-space-size=4096' next build"
+  }
+}
+```
+
+### Slow Build Performance
+
+#### Problem: Build Takes Extremely Long
+Build process is slow, especially on Windows.
+
+**Solutions**:
+1. **Use Docker**: More consistent performance across platforms
+2. **Exclude unnecessary files**: Update `.dockerignore` and `.gitignore`
+3. **Use build cache**: Enable Docker BuildKit
+4. **Optimize dependencies**: Remove unused packages
+
+```bash
+# Enable BuildKit for faster builds
+export DOCKER_BUILDKIT=1
+docker build -t suna-frontend ./frontend
+```
+
+## Dependency Issues
+
+### Package Version Conflicts
+
+#### Problem: Conflicting Package Versions
+```
+npm ERR! peer dep missing: react@^18.0.0
+```
+
+**Solutions**:
+```bash
+# Check for conflicts
+npm ls
+
+# Fix peer dependencies
+npm install --legacy-peer-deps
+
+# Or use exact versions
+npm install react@18.2.0 react-dom@18.2.0
+```
+
+### Missing Dependencies
+
+#### Problem: Runtime Errors Due to Missing Packages
+Application builds but fails at runtime with missing module errors.
+
+**Solution**: Install missing dependencies:
+```bash
+# Check what's actually needed
+npm run build 2>&1 | grep "Module not found"
+
+# Install missing packages
+npm install missing-package-name
+
+# Update package.json dependencies
+npm install --save missing-package-name
+```
+
+## Build Verification
+
+### Pre-build Checklist
+- [ ] All TypeScript errors resolved
+- [ ] All imports have correct paths
+- [ ] Environment variables are set
+- [ ] Dependencies are installed
+- [ ] Build cache is cleared if needed
+
+### Build Testing
+```bash
+# Test TypeScript compilation
+npx tsc --noEmit
+
+# Test build locally
+npm run build
+
+# Test production build
+npm run start
+
+# Test in Docker
+docker build -t test-build ./frontend
+docker run -p 3000:3000 test-build
+```
+
+### Post-build Verification
+- [ ] Application starts without errors
+- [ ] All pages load correctly
+- [ ] API connections work
+- [ ] Static assets are served
+- [ ] Environment variables are accessible
+
+## Debugging Build Issues
+
+### Enable Verbose Logging
+```bash
+# Next.js verbose build
+npm run build -- --debug
+
+# Docker verbose build
+docker build --progress=plain -t suna-frontend ./frontend
+
+# npm verbose logging
+npm run build --verbose
+```
+
+### Common Debug Commands
+```bash
+# Check Node.js version
+node --version
+
+# Check npm version
+npm --version
+
+# Check TypeScript version
+npx tsc --version
+
+# List installed packages
+npm list
+
+# Check for outdated packages
+npm outdated
+```
+
+### Log Analysis
+Look for these common patterns in build logs:
+- `Module not found`: Missing imports or dependencies
+- `Type error`: TypeScript compilation issues
+- `ENOENT`: File or directory not found
+- `EACCES`: Permission issues
+- `Heap out of memory`: Memory allocation problems

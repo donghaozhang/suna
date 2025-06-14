@@ -16,10 +16,39 @@ from dramatiq.brokers.rabbitmq import RabbitmqBroker
 import os
 from services.langfuse import langfuse
 from utils.retry import retry
+from urllib.parse import urlparse
+import pika
 
-rabbitmq_host = os.getenv('RABBITMQ_HOST', 'rabbitmq')
-rabbitmq_port = int(os.getenv('RABBITMQ_PORT', 5672))
-rabbitmq_broker = RabbitmqBroker(host=rabbitmq_host, port=rabbitmq_port, middleware=[dramatiq.middleware.AsyncIO()])
+# Configure RabbitMQ connection
+rabbitmq_url = os.getenv('RABBITMQ_URL')
+
+if rabbitmq_url:
+    # Parse RabbitMQ URL (e.g., amqp://user:pass@host:port/vhost)
+    parsed = urlparse(rabbitmq_url)
+    rabbitmq_host = parsed.hostname or 'rabbitmq'
+    rabbitmq_port = parsed.port or 5672
+    rabbitmq_user = parsed.username or 'guest'
+    rabbitmq_pass = parsed.password or 'guest'
+    rabbitmq_vhost = parsed.path.lstrip('/') if parsed.path and parsed.path != '/' else '/'
+    
+    # Use the full URL for RabbitmqBroker
+    rabbitmq_broker = RabbitmqBroker(url=rabbitmq_url, middleware=[dramatiq.middleware.AsyncIO()])
+    logger.info(f"Using RABBITMQ_URL for connection to {rabbitmq_host}:{rabbitmq_port}")
+else:
+    # Fallback to individual environment variables
+    rabbitmq_host = os.getenv('RABBITMQ_HOST', 'rabbitmq')
+    rabbitmq_port = int(os.getenv('RABBITMQ_PORT', 5672))
+    rabbitmq_user = os.getenv('RABBITMQ_USER', 'guest')
+    rabbitmq_pass = os.getenv('RABBITMQ_PASS', 'guest')
+    
+    rabbitmq_broker = RabbitmqBroker(
+        host=rabbitmq_host, 
+        port=rabbitmq_port,
+        credentials=pika.PlainCredentials(rabbitmq_user, rabbitmq_pass),
+        middleware=[dramatiq.middleware.AsyncIO()]
+    )
+    logger.info(f"Using individual RabbitMQ env vars for connection to {rabbitmq_host}:{rabbitmq_port}")
+
 dramatiq.set_broker(rabbitmq_broker)
 
 _initialized = False

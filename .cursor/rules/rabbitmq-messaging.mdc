@@ -1,0 +1,450 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# RabbitMQ & Message Queue Management
+
+## Overview
+
+Suna uses RabbitMQ for background task processing and agent execution. This guide covers setup, configuration, troubleshooting, and best practices for RabbitMQ integration.
+
+## Architecture
+
+### Message Flow
+1. **Frontend** → API request → **Backend**
+2. **Backend** → Queue task → **RabbitMQ**
+3. **Worker** → Process task → **Agent Execution**
+4. **Worker** → Update status → **Database**
+5. **Backend** → Real-time update → **Frontend**
+
+### Components
+- **Producer**: Backend API (`backend/api.py`)
+- **Queue**: RabbitMQ server
+- **Consumer**: Background worker (`backend/run_agent_background.py`)
+- **Tasks**: Agent execution, file processing, etc.
+
+## Configuration
+
+### Environment Variables
+
+#### Local Development
+```env
+# Individual variables (local Docker Compose)
+RABBITMQ_HOST=localhost
+RABBITMQ_PORT=5672
+RABBITMQ_USER=guest
+RABBITMQ_PASS=guest
+RABBITMQ_VHOST=/
+```
+
+#### Cloud Deployment
+```env
+# URL-based configuration (Railway, etc.)
+RABBITMQ_URL=amqp://user:pass@host:port/vhost
+
+# Or individual variables
+RABBITMQ_HOST=your-rabbitmq-host
+RABBITMQ_PORT=5672
+RABBITMQ_USER=suna
+RABBITMQ_PASS=suna123
+RABBITMQ_VHOST=/
+```
+
+#### RabbitMQ Server Configuration
+```env
+# For RabbitMQ container/service
+RABBITMQ_DEFAULT_USER=suna
+RABBITMQ_DEFAULT_PASS=suna123
+```
+
+### Connection Code Pattern
+
+#### Backend Connection (`backend/run_agent_background.py`)
+```python
+import pika
+import os
+from urllib.parse import urlparse
+
+def get_rabbitmq_connection():
+    """Get RabbitMQ connection with fallback configuration"""
+    
+    # Try URL-based configuration first (cloud)
+    rabbitmq_url = os.getenv('RABBITMQ_URL')
+    if rabbitmq_url:
+        return pika.BlockingConnection(pika.URLParameters(rabbitmq_url))
+    
+    # Fallback to individual variables (local)
+    rabbitmq_host = os.getenv('RABBITMQ_HOST', 'localhost')
+    rabbitmq_port = int(os.getenv('RABBITMQ_PORT', 5672))
+    rabbitmq_user = os.getenv('RABBITMQ_USER', 'guest')
+    rabbitmq_pass = os.getenv('RABBITMQ_PASS', 'guest')
+    rabbitmq_vhost = os.getenv('RABBITMQ_VHOST', '/')
+    
+    # Create credentials object (IMPORTANT: Use pika.PlainCredentials)
+    credentials = pika.PlainCredentials(rabbitmq_user, rabbitmq_pass)
+    
+    # Create connection parameters
+    parameters = pika.ConnectionParameters(
+        host=rabbitmq_host,
+        port=rabbitmq_port,
+        virtual_host=rabbitmq_vhost,
+        credentials=credentials
+    )
+    
+    return pika.BlockingConnection(parameters)
+```
+
+## Common Issues & Solutions
+
+### Authentication Errors
+
+#### Problem: `ACCESS_REFUSED - Login was refused using authentication mechanism PLAIN`
+
+**Root Causes**:
+1. Incorrect credentials
+2. User doesn't exist in RabbitMQ
+3. Wrong credential format in code
+4. RabbitMQ container not updated with new credentials
+
+**Solutions**:
+
+**1. Verify Credentials Format**
+```python
+# WRONG - Dictionary format doesn't work
+credentials = {"username": "suna", "password": "suna123"}
+
+# CORRECT - Use pika.PlainCredentials object
+credentials = pika.PlainCredentials("suna", "suna123")
+```
+
+**2. Ensure Consistent Credentials**
+All services must use the same credentials:
+```env
+# RabbitMQ Service
+RABBITMQ_DEFAULT_USER=suna
+RABBITMQ_DEFAULT_PASS=suna123
+
+# Backend/Worker Services
+RABBITMQ_USER=suna
+RABBITMQ_PASS=suna123
+```
+
+**3. Recreate RabbitMQ Service**
+Sometimes credentials don't update properly:
+```bash
+# Local Docker
+docker compose down rabbitmq
+docker compose up -d rabbitmq
+
+# Railway - Delete and recreate RabbitMQ service
+```
+
+**4. Use Simple Passwords**
+Avoid special characters that might cause parsing issues:
+```env
+# AVOID - Special characters can cause issues
+RABBITMQ_PASS=SunaStrong123!@#
+
+# PREFER - Simple alphanumeric passwords
+RABBITMQ_PASS=suna123
+```
+
+### Connection Errors
+
+#### Problem: `Connection refused` or `Name resolution failed`
+
+**Solutions**:
+
+**1. Check Service Status**
+```bash
+# Local Docker
+docker compose ps rabbitmq
+docker compose logs rabbitmq
+
+# Railway
+npx @railway/cli status
+npx @railway/cli logs --service rabbitmq
+```
+
+**2. Verify Network Configuration**
+```bash
+# Test connection from backend container
+docker compose exec backend ping rabbitmq
+
+# Check if RabbitMQ port is accessible
+docker compose exec backend telnet rabbitmq 5672
+```
+
+**3. Check Environment Variables**
+```bash
+# Verify variables are set correctly
+docker compose exec backend env | grep RABBITMQ
+```
+
+### Queue Management Issues
+
+#### Problem: Messages Not Being Processed
+
+**Debugging Steps**:
+
+**1. Check Queue Status**
+```bash
+# Access RabbitMQ management interface
+# Local: http://localhost:15672
+# Login with RABBITMQ_DEFAULT_USER/PASS
+
+# Or use CLI
+docker compose exec rabbitmq rabbitmqctl list_queues
+```
+
+**2. Verify Worker is Running**
+```bash
+# Check worker logs
+docker compose logs -f worker
+
+# Railway
+npx @railway/cli logs --service worker --follow
+```
+
+**3. Test Message Publishing**
+```python
+# Test script to publish a message
+import pika
+
+connection = get_rabbitmq_connection()
+channel = connection.channel()
+
+# Declare queue
+channel.queue_declare(queue='agent_tasks', durable=True)
+
+# Publish test message
+channel.basic_publish(
+    exchange='',
+    routing_key='agent_tasks',
+    body='test message',
+    properties=pika.BasicProperties(delivery_mode=2)  # Make message persistent
+)
+
+connection.close()
+```
+
+## Best Practices
+
+### Connection Management
+
+#### Use Connection Pooling
+```python
+import pika.pool
+
+# Create connection pool
+pool = pika.pool.QueuedPool(
+    create=get_rabbitmq_connection,
+    max_size=10,
+    max_overflow=0,
+    timeout=10,
+    recycle=-1,
+    stale=45
+)
+
+# Use pool for operations
+with pool.acquire() as connection:
+    channel = connection.channel()
+    # Perform operations
+```
+
+#### Handle Connection Failures
+```python
+import time
+import logging
+
+def robust_rabbitmq_operation(operation, max_retries=3):
+    """Execute RabbitMQ operation with retry logic"""
+    for attempt in range(max_retries):
+        try:
+            connection = get_rabbitmq_connection()
+            result = operation(connection)
+            connection.close()
+            return result
+        except Exception as e:
+            logging.error(f"RabbitMQ operation failed (attempt {attempt + 1}): {e}")
+            if attempt < max_retries - 1:
+                time.sleep(2 ** attempt)  # Exponential backoff
+            else:
+                raise
+```
+
+### Message Design
+
+#### Use Durable Queues and Persistent Messages
+```python
+# Declare durable queue
+channel.queue_declare(queue='agent_tasks', durable=True)
+
+# Publish persistent message
+channel.basic_publish(
+    exchange='',
+    routing_key='agent_tasks',
+    body=json.dumps(message_data),
+    properties=pika.BasicProperties(
+        delivery_mode=2,  # Make message persistent
+        content_type='application/json'
+    )
+)
+```
+
+#### Message Structure
+```python
+message = {
+    'task_id': str(uuid.uuid4()),
+    'task_type': 'agent_execution',
+    'payload': {
+        'thread_id': 'thread_123',
+        'message': 'User message',
+        'agent_config': {...}
+    },
+    'created_at': datetime.utcnow().isoformat(),
+    'retry_count': 0,
+    'max_retries': 3
+}
+```
+
+### Error Handling
+
+#### Dead Letter Queues
+```python
+# Declare main queue with dead letter exchange
+channel.queue_declare(
+    queue='agent_tasks',
+    durable=True,
+    arguments={
+        'x-dead-letter-exchange': 'dlx',
+        'x-dead-letter-routing-key': 'failed_tasks'
+    }
+)
+
+# Declare dead letter exchange and queue
+channel.exchange_declare(exchange='dlx', exchange_type='direct')
+channel.queue_declare(queue='failed_tasks', durable=True)
+channel.queue_bind(exchange='dlx', queue='failed_tasks', routing_key='failed_tasks')
+```
+
+#### Message Acknowledgment
+```python
+def process_message(channel, method, properties, body):
+    try:
+        # Process message
+        result = handle_task(json.loads(body))
+        
+        # Acknowledge successful processing
+        channel.basic_ack(delivery_tag=method.delivery_tag)
+        
+    except Exception as e:
+        logging.error(f"Failed to process message: {e}")
+        
+        # Reject message and requeue (or send to DLQ)
+        channel.basic_nack(
+            delivery_tag=method.delivery_tag,
+            requeue=False  # Send to dead letter queue
+        )
+```
+
+## Monitoring & Debugging
+
+### RabbitMQ Management Interface
+
+#### Access Management UI
+```bash
+# Local development
+# URL: http://localhost:15672
+# Username: guest (or RABBITMQ_DEFAULT_USER)
+# Password: guest (or RABBITMQ_DEFAULT_PASS)
+
+# Enable management plugin if not available
+docker compose exec rabbitmq rabbitmq-plugins enable rabbitmq_management
+```
+
+#### Key Metrics to Monitor
+- **Queue Length**: Number of pending messages
+- **Message Rate**: Messages per second
+- **Consumer Count**: Active consumers
+- **Connection Status**: Active connections
+- **Memory Usage**: RabbitMQ memory consumption
+
+### CLI Monitoring
+
+#### Queue Information
+```bash
+# List all queues
+docker compose exec rabbitmq rabbitmqctl list_queues name messages consumers
+
+# Get detailed queue info
+docker compose exec rabbitmq rabbitmqctl list_queues name messages_ready messages_unacknowledged consumers
+```
+
+#### Connection Information
+```bash
+# List connections
+docker compose exec rabbitmq rabbitmqctl list_connections
+
+# List consumers
+docker compose exec rabbitmq rabbitmqctl list_consumers
+```
+
+### Application Logging
+
+#### Add RabbitMQ Logging
+```python
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+def publish_task(task_data):
+    logger.info(f"Publishing task: {task_data['task_id']}")
+    
+    try:
+        connection = get_rabbitmq_connection()
+        channel = connection.channel()
+        
+        channel.basic_publish(
+            exchange='',
+            routing_key='agent_tasks',
+            body=json.dumps(task_data)
+        )
+        
+        logger.info(f"Task published successfully: {task_data['task_id']}")
+        
+    except Exception as e:
+        logger.error(f"Failed to publish task: {e}")
+        raise
+    finally:
+        if 'connection' in locals():
+            connection.close()
+```
+
+## Deployment Considerations
+
+### Resource Requirements
+- **Memory**: 512MB minimum, 1GB recommended
+- **CPU**: 0.5 cores minimum
+- **Disk**: 1GB for message persistence
+- **Network**: Low latency between services
+
+### Scaling
+- **Horizontal**: Multiple RabbitMQ nodes (clustering)
+- **Vertical**: Increase memory and CPU
+- **Queue Sharding**: Distribute load across multiple queues
+- **Consumer Scaling**: Multiple worker instances
+
+### Security
+- **Authentication**: Always use custom credentials
+- **Network**: Restrict access to internal network
+- **TLS**: Enable TLS for production
+- **Firewall**: Only expose necessary ports
+
+### Backup & Recovery
+- **Message Persistence**: Enable durable queues
+- **Configuration Backup**: Export RabbitMQ definitions
+- **Monitoring**: Set up alerts for queue length and failures

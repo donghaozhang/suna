@@ -88,6 +88,12 @@ docker compose build --no-cache frontend
 
 # Clear cache when needed
 docker system prune -a -f
+
+# Windows-specific: Kill stuck Node processes
+taskkill /F /IM node.exe
+
+# Clear Next.js build cache
+Remove-Item -Recurse -Force .next
 ```
 
 ## Environment Configuration
@@ -115,6 +121,40 @@ NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 NEXT_PUBLIC_BACKEND_URL=http://localhost:8000/api
 NEXT_PUBLIC_URL=http://localhost:3000
+```
+
+### Cloud Deployment Environment
+
+#### Backend Production (.env.production)
+```env
+# Database
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# LLM Providers
+ANTHROPIC_API_KEY=your_anthropic_key
+OPENAI_API_KEY=your_openai_key
+
+# Cloud Services (URL-based for Railway, etc.)
+REDIS_URL=redis://user:pass@host:port/db
+RABBITMQ_URL=amqp://user:pass@host:port/vhost
+
+# CORS Configuration
+FRONTEND_URL=https://your-frontend-domain.com
+
+# Optional Services
+TAVILY_API_KEY=your_tavily_key
+FIRECRAWL_API_KEY=your_firecrawl_key
+FAL_KEY=your_fal_key
+```
+
+#### Frontend Production (.env.production)
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+NEXT_PUBLIC_BACKEND_URL=https://your-backend-domain.com/api
+NEXT_PUBLIC_URL=https://your-frontend-domain.com
 ```
 
 ## Quriosity Branding System

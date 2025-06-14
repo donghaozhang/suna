@@ -47,30 +47,29 @@ This directory contains updated and streamlined cursor rules for the Suna projec
 #### 7. database-supabase.mdc
 **Status**: Maintained as-is (concise at 411 lines)
 
-#### 8. railway-deployment.mdc
-**Updated File**: Comprehensive Railway deployment rules with error testing
-- **Service Architecture**: Frontend, Backend, Worker, Redis, RabbitMQ configuration
-- **Environment Variables**: Complete configuration for all services
-- **Railway CLI Commands**: Project setup, deployment, monitoring, debugging (updated to use `npx @railway/cli`)
-- **Redeploy Commands**: Force redeployment for individual services and batch operations
-- **API Error Testing**: 404 error detection, authentication testing, endpoint verification
-- **Error Resolution**: Step-by-step debugging workflow and quick fix commands
-- **Security Configuration**: Environment security, network security, database security
-- **Cost Optimization**: Pricing strategy and resource optimization
-- **Production Checklist**: Pre/post deployment verification steps with error monitoring
+#### 8. cloud-deployment.mdc
+**New File**: Comprehensive cloud deployment guide
+- **Environment Configuration**: Dual local/cloud configuration strategy
+- **Docker Image Management**: Building and pushing production images
+- **Railway Deployment**: Complete Railway CLI workflow and service configuration
+- **Troubleshooting**: Common cloud deployment issues and solutions
+- **Monitoring**: Health checks, logging, and performance monitoring
 
-#### 9. railway-testing.mdc
-**Updated File**: Railway testing strategy with comprehensive error testing
-- **Testing Strategy**: Branch-based testing approach with auto-deployment
-- **API Testing**: Health checks, authentication, endpoint testing checklists
-- **Frontend Testing**: Browser testing workflow and user flow verification
-- **Automated Testing**: Node.js testing scripts and integration testing
-- **Performance Testing**: Load testing and frontend performance measurement
-- **Regression Testing**: API and frontend regression test suites
-- **Error Testing & Resolution**: 404 error patterns, authentication errors, CORS issues
-- **Real-time Monitoring**: Log monitoring commands for error detection
-- **Deployment Verification**: Post-deployment checklists with error pattern analysis
-- **Redeploy Workflows**: Enhanced redeploy commands and verification procedures
+#### 9. build-troubleshooting.mdc
+**New File**: Build and compilation troubleshooting guide
+- **TypeScript Errors**: Missing exports, utility functions, and component prop issues
+- **Windows Build Issues**: Node.js process hanging, PowerShell vs Command Prompt
+- **Docker Build Problems**: Context errors, multi-platform builds, build arguments
+- **Memory & Performance**: OOM errors, slow builds, dependency conflicts
+- **Debugging Tools**: Verbose logging, common debug commands, log analysis
+
+#### 10. rabbitmq-messaging.mdc
+**New File**: RabbitMQ and message queue management
+- **Architecture**: Message flow and component overview
+- **Configuration**: Environment variables for local and cloud deployment
+- **Authentication Issues**: Credential format, consistent configuration, troubleshooting
+- **Best Practices**: Connection management, message design, error handling
+- **Monitoring**: Management interface, CLI monitoring, application logging
 
 ## Key Improvements Made
 
@@ -118,6 +117,14 @@ These rules are optimized for:
 - Efficient cursor rule processing
 
 ## Recent Changes Covered
+
+### From Recent Development & Deployment
+- **Cloud Deployment**: Complete Railway deployment workflow with Docker image management
+- **Environment Configuration**: Dual local/cloud configuration with automatic fallback
+- **Build Troubleshooting**: Comprehensive TypeScript compilation and Windows build issue solutions
+- **RabbitMQ Management**: Authentication fixes, connection patterns, and monitoring
+- **CORS Configuration**: Dynamic CORS origins with Railway wildcard support
+- **API Key Management**: Proper Anthropic API key configuration for agent execution
 
 ### From Upstream Merge
 - **Redis Reliability**: New retry utilities with automatic connection recovery
