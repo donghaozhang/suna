@@ -1,0 +1,308 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Cloud Deployment Guide
+
+## Overview
+
+Suna supports both local development and cloud deployment using 12-Factor App principles. The application is designed to work seamlessly across different environments using environment variables for configuration.
+
+## Environment Configuration Strategy
+
+### Local vs Cloud Configuration
+The application uses a dual environment variable approach:
+
+**Local Development (Individual Variables)**:
+```env
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_DB=0
+RABBITMQ_HOST=localhost
+RABBITMQ_PORT=5672
+RABBITMQ_USER=guest
+RABBITMQ_PASS=guest
+```
+
+**Cloud Deployment (URL-based)**:
+```env
+REDIS_URL=redis://user:pass@host:port/db
+RABBITMQ_URL=amqp://user:pass@host:port/vhost
+```
+
+### Environment Templates
+
+#### Backend Production Environment (backend/.env.production)
+```env
+# Database
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# LLM Providers
+ANTHROPIC_API_KEY=your_anthropic_key
+OPENAI_API_KEY=your_openai_key
+GROQ_API_KEY=your_groq_key
+
+# Cloud Services (URL-based)
+REDIS_URL=redis://user:pass@host:port/db
+RABBITMQ_URL=amqp://user:pass@host:port/vhost
+
+# Frontend URL for CORS
+FRONTEND_URL=https://your-frontend-domain.com
+
+# Optional Services
+TAVILY_API_KEY=your_tavily_key
+FIRECRAWL_API_KEY=your_firecrawl_key
+FAL_KEY=your_fal_key
+
+# Docker Hub (for deployment)
+DOCKER_USERNAME=your_docker_username
+DOCKER_TOKEN=your_docker_token
+```
+
+#### Frontend Production Environment (frontend/.env.production)
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+NEXT_PUBLIC_BACKEND_URL=https://your-backend-domain.com/api
+NEXT_PUBLIC_URL=https://your-frontend-domain.com
+```
+
+## Docker Image Management
+
+### Building Production Images
+```bash
+# Build all images with version tags
+docker build -t your-username/suna-backend:v1 ./backend
+docker build -t your-username/suna-frontend:v1 ./frontend  
+docker build -t your-username/suna-worker:v1 ./backend
+
+# Build frontend with environment variables
+docker build \
+  --build-arg NEXT_PUBLIC_BACKEND_URL=https://your-backend.com/api \
+  --build-arg NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co \
+  --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key \
+  -t your-username/suna-frontend:v1 ./frontend
+```
+
+### Pushing to Docker Hub
+```bash
+# Login to Docker Hub
+echo "your_docker_token" | docker login --username your_username --password-stdin
+
+# Push images
+docker push your-username/suna-backend:v1
+docker push your-username/suna-frontend:v1
+docker push your-username/suna-worker:v1
+```
+
+## Railway Deployment
+
+### Prerequisites
+```bash
+# Install Railway CLI (prefer npx over global install)
+npx @railway/cli --version
+
+# Login to Railway
+npx @railway/cli login
+```
+
+### Service Configuration
+
+#### Backend Service
+```bash
+# Set environment variables
+npx @railway/cli variables set ANTHROPIC_API_KEY=your_key
+npx @railway/cli variables set SUPABASE_URL=your_url
+npx @railway/cli variables set FRONTEND_URL=https://frontend-production-xxx.up.railway.app
+npx @railway/cli variables set RABBITMQ_USER=suna
+npx @railway/cli variables set RABBITMQ_PASS=suna123
+
+# Update Docker image
+# In Railway console: Settings > Deploy > Image > your-username/suna-backend:v1
+```
+
+#### Frontend Service  
+```bash
+# Set environment variables
+npx @railway/cli variables set NEXT_PUBLIC_BACKEND_URL=https://backend-production-xxx.up.railway.app/api
+npx @railway/cli variables set NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+
+# Update Docker image
+# In Railway console: Settings > Deploy > Image > your-username/suna-frontend:v1
+```
+
+#### Worker Service
+```bash
+# Set same environment as backend
+npx @railway/cli variables set ANTHROPIC_API_KEY=your_key
+npx @railway/cli variables set RABBITMQ_USER=suna
+npx @railway/cli variables set RABBITMQ_PASS=suna123
+
+# Update Docker image  
+# In Railway console: Settings > Deploy > Image > your-username/suna-worker:v1
+```
+
+#### RabbitMQ Service
+```bash
+# Set default credentials
+npx @railway/cli variables set RABBITMQ_DEFAULT_USER=suna
+npx @railway/cli variables set RABBITMQ_DEFAULT_PASS=suna123
+```
+
+### Railway CLI Commands
+```bash
+# Check service status
+npx @railway/cli status
+
+# View logs
+npx @railway/cli logs --service backend
+npx @railway/cli logs --service frontend
+
+# List environment variables
+npx @railway/cli variables
+
+# Get domain information
+npx @railway/cli domain
+```
+
+## Environment Variable Priority
+
+### Backend Services (Redis/RabbitMQ)
+The backend automatically detects and uses the appropriate configuration:
+
+1. **Cloud URL** (highest priority): `REDIS_URL`, `RABBITMQ_URL`
+2. **Individual variables** (fallback): `REDIS_HOST`, `RABBITMQ_HOST`, etc.
+
+### Frontend API Configuration
+The frontend uses dynamic API URL resolution:
+
+1. **Build-time variable**: `NEXT_PUBLIC_BACKEND_URL` 
+2. **Runtime fallback**: Replace `frontend` with `backend` in current domain
+3. **Local fallback**: Relative `/api` path
+
+## Common Cloud Deployment Issues
+
+### Frontend API Connection
+**Problem**: Frontend makes requests to placeholder domains like `api.example.com`
+
+**Root Cause**: Next.js builds environment variables at compile time
+
+**Solution**: Build frontend image with correct `NEXT_PUBLIC_BACKEND_URL`:
+```bash
+docker build \
+  --build-arg NEXT_PUBLIC_BACKEND_URL=https://backend-production-xxx.up.railway.app/api \
+  -t your-username/suna-frontend:v2 ./frontend
+```
+
+### RabbitMQ Authentication
+**Problem**: `ACCESS_REFUSED - Login was refused using authentication mechanism PLAIN`
+
+**Solutions**:
+1. Ensure consistent credentials across all services
+2. Recreate RabbitMQ service with fresh container
+3. Use simple passwords (avoid special characters)
+4. Verify credential format in code
+
+### CORS Configuration
+**Problem**: `No 'Access-Control-Allow-Origin' header is present`
+
+**Solution**: Backend automatically configures CORS for Railway domains:
+```python
+# In backend/api.py
+origins = [
+    "http://localhost:3000",
+    os.getenv("FRONTEND_URL", ""),
+]
+
+# Add Railway wildcard support
+origins.append(r"https://.*\.up\.railway\.app")
+```
+
+### Memory Issues
+**Problem**: "Out of Memory (OOM)" errors in Railway
+
+**Solutions**:
+1. Optimize Docker images (use multi-stage builds)
+2. Reduce memory usage in application code
+3. Upgrade Railway plan for more memory
+4. Monitor memory usage with Railway metrics
+
+## Deployment Checklist
+
+### Pre-deployment
+- [ ] Build and test Docker images locally
+- [ ] Verify environment variables in `.env.production` files
+- [ ] Test database migrations
+- [ ] Verify external service API keys
+
+### Docker Images
+- [ ] Build backend image with version tag
+- [ ] Build frontend image with correct build args
+- [ ] Build worker image with version tag
+- [ ] Push all images to Docker Hub
+- [ ] Verify images are publicly accessible
+
+### Railway Configuration
+- [ ] Create/update all services (backend, frontend, worker, rabbitmq, redis)
+- [ ] Set environment variables for each service
+- [ ] Update Docker image sources in Railway console
+- [ ] Verify service networking and domains
+- [ ] Test inter-service communication
+
+### Post-deployment
+- [ ] Check all service logs for errors
+- [ ] Test frontend application functionality
+- [ ] Verify agent execution works
+- [ ] Test file uploads and downloads
+- [ ] Monitor resource usage and performance
+
+## Monitoring & Maintenance
+
+### Health Checks
+```bash
+# Check service health
+curl https://backend-production-xxx.up.railway.app/health
+curl https://frontend-production-xxx.up.railway.app/api/health
+
+# Check specific functionality
+curl https://backend-production-xxx.up.railway.app/api/agents
+```
+
+### Log Monitoring
+```bash
+# Monitor real-time logs
+npx @railway/cli logs --service backend --follow
+npx @railway/cli logs --service worker --follow
+
+# Check for specific errors
+npx @railway/cli logs --service backend | grep ERROR
+```
+
+### Performance Monitoring
+- Monitor Railway service metrics in dashboard
+- Check database performance in Supabase dashboard
+- Monitor external API usage and rate limits
+- Track memory and CPU usage patterns
+
+## Rollback Procedures
+
+### Image Rollback
+1. Identify last working image version
+2. Update Railway service to use previous image tag
+3. Redeploy service
+4. Verify functionality
+
+### Environment Variable Rollback
+1. Export current variables: `npx @railway/cli variables > backup.env`
+2. Restore previous variables from backup
+3. Restart affected services
+4. Verify configuration
+
+### Database Rollback
+1. Use Supabase dashboard to restore from backup
+2. Run any necessary migration rollbacks
+3. Update application configuration if needed
+4. Test data integrity

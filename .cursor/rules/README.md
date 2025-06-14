@@ -47,6 +47,30 @@ This directory contains updated and streamlined cursor rules for the Suna projec
 #### 7. database-supabase.mdc
 **Status**: Maintained as-is (concise at 411 lines)
 
+#### 8. cloud-deployment.mdc
+**New File**: Comprehensive cloud deployment guide
+- **Environment Configuration**: Dual local/cloud configuration strategy
+- **Docker Image Management**: Building and pushing production images
+- **Railway Deployment**: Complete Railway CLI workflow and service configuration
+- **Troubleshooting**: Common cloud deployment issues and solutions
+- **Monitoring**: Health checks, logging, and performance monitoring
+
+#### 9. build-troubleshooting.mdc
+**New File**: Build and compilation troubleshooting guide
+- **TypeScript Errors**: Missing exports, utility functions, and component prop issues
+- **Windows Build Issues**: Node.js process hanging, PowerShell vs Command Prompt
+- **Docker Build Problems**: Context errors, multi-platform builds, build arguments
+- **Memory & Performance**: OOM errors, slow builds, dependency conflicts
+- **Debugging Tools**: Verbose logging, common debug commands, log analysis
+
+#### 10. rabbitmq-messaging.mdc
+**New File**: RabbitMQ and message queue management
+- **Architecture**: Message flow and component overview
+- **Configuration**: Environment variables for local and cloud deployment
+- **Authentication Issues**: Credential format, consistent configuration, troubleshooting
+- **Best Practices**: Connection management, message design, error handling
+- **Monitoring**: Management interface, CLI monitoring, application logging
+
 ## Key Improvements Made
 
 ### Infrastructure Enhancements
@@ -93,6 +117,14 @@ These rules are optimized for:
 - Efficient cursor rule processing
 
 ## Recent Changes Covered
+
+### From Recent Development & Deployment
+- **Cloud Deployment**: Complete Railway deployment workflow with Docker image management
+- **Environment Configuration**: Dual local/cloud configuration with automatic fallback
+- **Build Troubleshooting**: Comprehensive TypeScript compilation and Windows build issue solutions
+- **RabbitMQ Management**: Authentication fixes, connection patterns, and monitoring
+- **CORS Configuration**: Dynamic CORS origins with Railway wildcard support
+- **API Key Management**: Proper Anthropic API key configuration for agent execution
 
 ### From Upstream Merge
 - **Redis Reliability**: New retry utilities with automatic connection recovery

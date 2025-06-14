@@ -165,6 +165,35 @@ npm install
 
 # Check for TypeScript errors
 npm run type-check
+
+# Windows-specific: Kill stuck Node processes
+taskkill /F /IM node.exe
+
+# Use Docker build instead (more reliable on Windows)
+docker compose build frontend
+```
+
+#### TypeScript Compilation Errors
+**Problem**: Missing exports or utility functions cause build failures.
+
+**Common Missing Exports**:
+- `getSupabaseClient` from `@/lib/supabase/client`
+- `useProject` from `@/hooks/react-query/threads/use-project`
+- File utilities (`getMimeType`, `isImage`, etc.) from `@/components/thread/tool-views/utils`
+
+**Solution**: Add missing exports and utility functions. See `build-troubleshooting.mdc` for detailed solutions.
+
+#### Cloud Deployment Build Issues
+**Problem**: Frontend makes requests to placeholder domains like `api.example.com`.
+
+**Root Cause**: Next.js builds environment variables at compile time.
+
+**Solution**: Build Docker image with correct environment variables:
+```bash
+docker build \
+  --build-arg NEXT_PUBLIC_BACKEND_URL=https://backend-production-xxx.up.railway.app/api \
+  --build-arg NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co \
+  -t your-username/suna-frontend:v2 ./frontend
 ```
 
 #### Database Migration Issues
@@ -192,6 +221,48 @@ supabase migration list
 2. Verify server credentials and connection settings
 3. Re-configure servers using the improved MCP configuration interface
 4. Check for deprecated MCP configuration components (some were removed in recent updates)
+
+#### RabbitMQ Authentication Issues
+**Problem**: `ACCESS_REFUSED - Login was refused using authentication mechanism PLAIN`
+
+**Root Causes**:
+1. Incorrect credential format in code
+2. Inconsistent credentials across services
+3. RabbitMQ container not updated with new credentials
+
+**Solutions**:
+```bash
+# 1. Verify credential format in code
+# WRONG: credentials = {"username": "user", "password": "pass"}
+# CORRECT: credentials = pika.PlainCredentials("user", "pass")
+
+# 2. Ensure consistent credentials across all services
+# RabbitMQ Service: RABBITMQ_DEFAULT_USER=suna, RABBITMQ_DEFAULT_PASS=suna123
+# Backend/Worker: RABBITMQ_USER=suna, RABBITMQ_PASS=suna123
+
+# 3. Recreate RabbitMQ service with fresh container
+docker compose down rabbitmq
+docker compose up -d rabbitmq
+
+# 4. Use simple passwords (avoid special characters)
+# AVOID: SunaStrong123!@#
+# PREFER: suna123
+```
+
+#### Agent Execution Failures
+**Problem**: Agents crash with authentication errors or VNC connection issues.
+
+**Root Cause**: Missing API keys (especially `ANTHROPIC_API_KEY`) cause LLM authentication failures.
+
+**Solution**: Ensure all required API keys are set in environment:
+```bash
+# Check if API keys are set
+docker compose exec backend env | grep API_KEY
+
+# Add missing keys to backend/.env
+ANTHROPIC_API_KEY=your_anthropic_key
+OPENAI_API_KEY=your_openai_key
+```
 
 ### Debug Commands
 
