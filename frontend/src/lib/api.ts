@@ -1,8 +1,32 @@
 import { createClient } from '@/lib/supabase/client';
 import { handleApiError } from './error-handler';
 
-// Get backend URL from environment variables
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
+// Determine API base URL.
+// 1. Use build-time env var if provided (preferred for prod builds).
+// 2. Fallback at runtime in the browser: replace the current origin subdomain `frontend` with `backend` (Railway pattern) and append /api.
+// 3. Ultimately, fallback to relative "/api" which works in docker-compose localhost.
+
+let API_URL: string = process.env.NEXT_PUBLIC_BACKEND_URL || '';
+
+if (!API_URL) {
+  // Runtime fallback (executed in browser only).
+  if (typeof window !== 'undefined') {
+    try {
+      const { origin } = window.location;
+      // If deployed on Railway, public domain often follows pattern frontend-xxx.up.railway.app
+      // Replace the first occurrence of "frontend" with "backend" to hit the backend service.
+      const runtimeBackendOrigin = origin.replace('frontend', 'backend');
+      API_URL = `${runtimeBackendOrigin}/api`;
+    } catch (err) {
+      // Ignore and keep empty; will fall back to relative URL below.
+    }
+  }
+
+  // If still empty (e.g., server-side or replacement failed) use relative path
+  if (!API_URL) {
+    API_URL = '/api';
+  }
+}
 
 // Set to keep track of agent runs that are known to be non-running
 const nonRunningAgentRuns = new Set<string>();
