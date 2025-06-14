@@ -16,3 +16,14 @@ export const createClient = () => {
 
   return createBrowserClient(supabaseUrl, supabaseAnonKey);
 };
+
+export function getSupabaseClient(accessToken?: string) {
+  const client = createClient();
+  
+  if (accessToken) {
+    // Set the access token for authenticated requests
+    client.realtime.setAuth(accessToken);
+  }
+  
+  return client;
+}

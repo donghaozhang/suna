@@ -1544,3 +1544,91 @@ export function extractToolData(content: any): {
     query: null,
   };
 }
+
+// Utility functions for file type detection and MIME types
+export function getMimeType(filePath: string): string {
+  const ext = filePath.split('.').pop()?.toLowerCase() || '';
+  
+  switch (ext) {
+    // Images
+    case 'png': return 'image/png';
+    case 'jpg': 
+    case 'jpeg': return 'image/jpeg';
+    case 'gif': return 'image/gif';
+    case 'svg': return 'image/svg+xml';
+    case 'webp': return 'image/webp';
+    case 'bmp': return 'image/bmp';
+    case 'ico': return 'image/x-icon';
+    
+    // Videos
+    case 'mp4': return 'video/mp4';
+    case 'webm': return 'video/webm';
+    case 'mov': return 'video/quicktime';
+    case 'avi': return 'video/x-msvideo';
+    case 'wmv': return 'video/x-ms-wmv';
+    case 'flv': return 'video/x-flv';
+    
+    // Audio
+    case 'mp3': return 'audio/mpeg';
+    case 'wav': return 'audio/wav';
+    case 'ogg': return 'audio/ogg';
+    case 'flac': return 'audio/flac';
+    case 'aac': return 'audio/aac';
+    
+    // Documents
+    case 'pdf': return 'application/pdf';
+    case 'txt': return 'text/plain';
+    case 'html': return 'text/html';
+    case 'css': return 'text/css';
+    case 'js': return 'text/javascript';
+    case 'json': return 'application/json';
+    case 'xml': return 'application/xml';
+    case 'csv': return 'text/csv';
+    case 'md': return 'text/markdown';
+    
+    // Office documents
+    case 'xlsx': return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    case 'xls': return 'application/vnd.ms-excel';
+    case 'docx': return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    case 'doc': return 'application/msword';
+    case 'pptx': return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+    case 'ppt': return 'application/vnd.ms-powerpoint';
+    
+    // Archives
+    case 'zip': return 'application/zip';
+    case 'tar': return 'application/x-tar';
+    case 'gz': return 'application/gzip';
+    case 'rar': return 'application/vnd.rar';
+    
+    // Default
+    default: return 'application/octet-stream';
+  }
+}
+
+export function isImage(mimeType: string | null): boolean {
+  if (!mimeType) return false;
+  return mimeType.startsWith('image/');
+}
+
+export function isVideo(mimeType: string | null): boolean {
+  if (!mimeType) return false;
+  return mimeType.startsWith('video/');
+}
+
+export function isAudio(mimeType: string | null): boolean {
+  if (!mimeType) return false;
+  return mimeType.startsWith('audio/');
+}
+
+export function isPdf(mimeType: string | null): boolean {
+  if (!mimeType) return false;
+  return mimeType === 'application/pdf';
+}
+
+export function isText(mimeType: string | null): boolean {
+  if (!mimeType) return false;
+  return mimeType.startsWith('text/') || 
+         mimeType === 'application/json' ||
+         mimeType === 'application/xml' ||
+         mimeType === 'text/markdown';
+}
