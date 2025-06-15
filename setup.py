@@ -24,19 +24,21 @@ class Colors:
     UNDERLINE = '\033[4m'
 
 def print_banner():
-    """Print Suna setup banner"""
-    print(f"""
-{Colors.BLUE}{Colors.BOLD}
-   ███████╗██╗   ██╗███╗   ██╗ █████╗ 
-   ██╔════╝██║   ██║████╗  ██║██╔══██╗
-   ███████╗██║   ██║██╔██╗ ██║███████║
-   ╚════██║██║   ██║██║╚██╗██║██╔══██║
-   ███████║╚██████╔╝██║ ╚████║██║  ██║
-   ╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═╝
-                                      
-   Setup Wizard
-{Colors.ENDC}
-""")
+    """Print Quriosity (Q) setup banner"""
+    print(
+        f"""{Colors.BLUE}{Colors.BOLD}
+     ██████╗  
+    ██╔═══██╗ 
+    ██║   ██║ 
+    ██║   ██║ 
+    ██║   ██║ 
+    ╚██████╔╝ 
+     ╚═══██╔╝ 
+
+
+    Quriosity (Q) Setup Wizard
+{Colors.ENDC}"""
+    )
 
 PROGRESS_FILE = '.setup_progress'
 
