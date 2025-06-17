@@ -1452,12 +1452,15 @@ export const initiateAgent = async (
               `[API] Initiating agent with files using ${getApiUrl('/agent/initiate')}`,
     );
 
+    const requestBody = { ...formData, tolt_referral: (window as any).tolt_referral };
+    console.log('Tolt Referral ID:', requestBody.tolt_referral);
+    
     const response = await fetch(getApiUrl('/agent/initiate'), {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${session.access_token}`,
       },
-      body: formData,
+      body: requestBody,
       cache: 'no-store',
     });
 
@@ -1525,6 +1528,7 @@ export interface CreateCheckoutSessionRequest {
   price_id: string;
   success_url: string;
   cancel_url: string;
+  referral_id?: string;
 }
 
 export interface CreatePortalSessionRequest {
@@ -1614,13 +1618,16 @@ export const createCheckoutSession = async (
       throw new NoAccessTokenAvailableError();
     }
 
+    const requestBody = { ...request, tolt_referral: (window as any).tolt_referral };
+    console.log('Tolt Referral ID:', requestBody.tolt_referral);
+    
     const response = await fetch(getApiUrl('/billing/create-checkout-session'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${session.access_token}`,
       },
-      body: JSON.stringify(request),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
