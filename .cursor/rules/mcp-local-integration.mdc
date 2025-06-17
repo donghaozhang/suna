@@ -1,0 +1,308 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# MCP Local Integration - Model Context Protocol
+
+## Overview
+
+The `backend/mcp_local/` directory contains the complete implementation of Model Context Protocol (MCP) integration for Quriosity agents. MCP enables agents to connect to external tools and services through a standardized protocol.
+
+## Architecture
+
+### Two-Tier Smithery Integration
+
+The MCP implementation uses Smithery's dual API architecture:
+
+1. **Registry API** (`https://registry.smithery.ai`) - Server discovery and metadata
+2. **Server API** (`https://server.smithery.ai`) - Actual MCP server connections
+
+### Connection Flow
+
+```mermaid
+graph TD
+    A[Agent Configuration] --> B[MCP Manager]
+    B --> C[Registry API - Browse Servers]
+    C --> D[Server Selection & Config]
+    D --> E[Server API - Connect to MCP]
+    E --> F[Tool Discovery]
+    F --> G[Tool Execution]
+```
+
+## File Structure
+
+```
+backend/mcp_local/
+├── __init__.py          # Module initialization
+├── api.py              # FastAPI endpoints for MCP server discovery
+└── client.py           # MCP client implementation and tool execution
+```
+
+## Core Components
+
+### 1. API Module (`api.py`)
+
+**Purpose**: Handles MCP server discovery and configuration management through Smithery Registry API.
+
+**Key Features**:
+- Server browsing with semantic search
+- Popular servers discovery with categorization
+- Detailed server information retrieval
+- Custom MCP server connection support
+
+**Main Endpoints**:
+```python
+GET /mcp/servers                    # List available MCP servers
+GET /mcp/servers/{qualified_name}   # Get server details
+GET /mcp/popular-servers            # Get popular servers (v1)
+GET /mcp/popular-servers/v2         # Get categorized popular servers
+POST /mcp/connect-custom            # Connect to custom MCP server
+```
+
+**Search Capabilities**:
+- Semantic search: `"machine learning"`
+- Owner filtering: `"owner:smithery-ai"`
+- Repository filtering: `"repo:fetch"`
+- Status filtering: `"is:deployed"`, `"is:verified"`
+
+### 2. Client Module (`client.py`)
+
+**Purpose**: Manages connections to MCP servers and executes tool calls.
+
+**Key Classes**:
+
+#### MCPConnection
+```python
+@dataclass
+class MCPConnection:
+    qualified_name: str      # Unique server identifier
+    name: str               # Display name
+    config: Dict[str, Any]  # Server configuration
+    enabled_tools: List[str] # Allowed tools
+    session: Optional[ClientSession] = None
+    tools: Optional[List[Tool]] = None
+```
+
+#### MCPManager
+```python
+class MCPManager:
+    def connect_server(mcp_config) -> MCPConnection
+    def connect_all(mcp_configs) -> None
+    def get_all_tools_openapi() -> List[Dict[str, Any]]
+    def execute_tool(tool_name, arguments) -> Dict[str, Any]
+    def disconnect_all() -> None
+```
+
+## Configuration Format
+
+### Agent MCP Configuration
+```json
+{
+  "name": "Exa Search",
+  "qualifiedName": "exa",
+  "config": {
+    "exaApiKey": "your_api_key_here"
+  },
+  "enabledTools": ["web_search_exa"]
+}
+```
+
+### Environment Variables
+```bash
+# Required for MCP server connections
+SMITHERY_API_KEY=your_smithery_api_key
+
+# Optional for enhanced registry access
+SMITHERY_REGISTRY_KEY=your_registry_key
+```
+
+## Tool Integration
+
+### Tool Name Convention
+MCP tools are prefixed to avoid conflicts:
+```
+Original: web_search
+MCP Format: mcp_exa_web_search
+Format: mcp_{qualified_name}_{original_tool_name}
+```
+
+### OpenAPI Conversion
+MCP tools are automatically converted to OpenAPI format for LLM consumption:
+
+```python
+{
+    "name": "mcp_exa_web_search",
+    "description": "Search the web using Exa",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "query": {"type": "string", "description": "Search query"},
+            "num_results": {"type": "integer", "default": 10}
+        },
+        "required": ["query"]
+    }
+}
+```
+
+## Usage Patterns
+
+### 1. Server Discovery
+```python
+# List servers with search
+GET /mcp/servers?q=machine learning&page=1&pageSize=20
+
+# Get server details
+GET /mcp/servers/exa
+```
+
+### 2. Agent Integration
+```python
+# In agent configuration
+mcp_configs = [
+    {
+        "name": "Exa Search",
+        "qualifiedName": "exa", 
+        "config": {"exaApiKey": "xxx"},
+        "enabledTools": ["web_search_exa"]
+    }
+]
+
+# Initialize MCP manager
+mcp_manager = MCPManager()
+await mcp_manager.connect_all(mcp_configs)
+
+# Get tools for LLM
+tools = mcp_manager.get_all_tools_openapi()
+```
+
+### 3. Tool Execution
+```python
+# Execute MCP tool
+result = await mcp_manager.execute_tool(
+    "mcp_exa_web_search",
+    {"query": "latest AI research", "num_results": 5}
+)
+```
+
+## Error Handling
+
+### Connection Failures
+- Graceful degradation when servers are unavailable
+- Detailed logging for debugging
+- Retry mechanisms for transient failures
+
+### Authentication Issues
+- Clear error messages for missing API keys
+- Fallback to public servers when possible
+- Validation of Smithery URLs
+
+## Security Considerations
+
+### API Key Management
+- Environment variable storage only
+- No hardcoded credentials
+- Secure base64 encoding for config transmission
+
+### URL Validation
+- Strict validation of Smithery server URLs
+- Prevention of arbitrary URL connections
+- Sanitization of qualified names
+
+## Development Guidelines
+
+### Adding New MCP Features
+
+1. **Server Discovery**: Extend `api.py` endpoints
+2. **Tool Integration**: Modify `client.py` tool conversion
+3. **Configuration**: Update agent configuration schema
+4. **Testing**: Add integration tests for new servers
+
+### Best Practices
+
+1. **Connection Management**:
+   - Use connection pooling for efficiency
+   - Implement proper cleanup in `disconnect_all()`
+   - Handle session timeouts gracefully
+
+2. **Tool Registration**:
+   - Validate tool schemas before registration
+   - Implement tool filtering based on agent permissions
+   - Cache tool definitions for performance
+
+3. **Error Handling**:
+   - Log all MCP operations for debugging
+   - Provide meaningful error messages to users
+   - Implement circuit breaker patterns for unreliable servers
+
+## Popular MCP Servers
+
+### Categories Available
+- **Search & Web**: Exa, Tavily, web scrapers
+- **Development**: GitHub, GitLab, code analysis
+- **Data & Analytics**: Database connectors, APIs
+- **Productivity**: Calendar, email, document processing
+- **AI & ML**: Model APIs, data processing tools
+
+### Integration Examples
+
+#### Exa Search Server
+```json
+{
+  "qualifiedName": "exa",
+  "displayName": "Exa Search",
+  "tools": ["web_search_exa"],
+  "config": {"exaApiKey": "required"}
+}
+```
+
+#### GitHub Server
+```json
+{
+  "qualifiedName": "@smithery-ai/github",
+  "displayName": "GitHub Integration",
+  "tools": ["create_issue", "list_repos", "get_file"],
+  "config": {"githubToken": "required"}
+}
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **"SMITHERY_API_KEY not set"**
+   - Solution: Add API key to environment variables
+   - Check: Verify key is valid and has proper permissions
+
+2. **"Failed to connect to MCP server"**
+   - Solution: Check server status and configuration
+   - Debug: Review server logs and network connectivity
+
+3. **"Tool not found"**
+   - Solution: Verify tool name format and enabled tools list
+   - Check: Ensure server connection is active
+
+### Debug Commands
+```bash
+# Check MCP server status
+curl -H "Authorization: Bearer $SMITHERY_API_KEY" \
+     https://registry.smithery.ai/servers/exa
+
+# Test server connection
+curl "https://server.smithery.ai/exa/mcp?config=e30=&api_key=$SMITHERY_API_KEY"
+```
+
+## Future Enhancements
+
+### Planned Features
+- Local MCP server support (non-Smithery)
+- Advanced tool filtering and permissions
+- MCP server health monitoring
+- Custom tool development framework
+- Enhanced caching and performance optimization
+
+### Integration Roadmap
+- Direct MCP protocol support (bypass Smithery)
+- Custom MCP server deployment
+- Tool marketplace integration
+- Advanced security and sandboxing

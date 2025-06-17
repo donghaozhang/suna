@@ -427,6 +427,10 @@ poetry run pytest tests/
 # Run specific test categories
 poetry run pytest tests/test_fal_tool.py      # FAL media generation tests
 poetry run pytest tests/test_image_generation.py  # Image generation tests
+poetry run pytest tests/test_validate_base64_image.py  # Base64 image validation tests
+poetry run pytest tests/test_token_compression.py  # Token compression tests
+poetry run pytest tests/test_custom_mcp.py    # Custom MCP server tests
+poetry run pytest tests/test_mcp_use.py       # MCP usage tests
 poetry run pytest tests/check_projects.py    # Project validation tests
 
 # Run tests with coverage

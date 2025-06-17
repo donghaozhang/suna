@@ -1,7 +1,7 @@
 ---
 description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 # Suna Project Architecture
 
@@ -72,7 +72,11 @@ suna/
 │       ├── README.md          # Test documentation
 │       ├── check_projects.py  # Project validation tests
 │       ├── test_fal_tool.py   # FAL media tool tests
-│       └── test_image_generation.py # Image generation tests
+│       ├── test_image_generation.py # Image generation tests
+│       ├── test_validate_base64_image.py # Base64 image validation tests
+│       ├── test_token_compression.py # Token compression tests
+│       ├── test_custom_mcp.py # Custom MCP server tests
+│       └── test_mcp_use.py    # MCP usage tests
 ├── frontend/                   # Next.js/React application
 │   ├── src/
 │   │   ├── app/               # Next.js App Router

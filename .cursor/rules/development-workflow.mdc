@@ -1,7 +1,7 @@
 ---
 description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 # Development Workflow & Setup
 
@@ -26,7 +26,11 @@ suna/
 │       ├── README.md          # Test documentation
 │       ├── check_projects.py  # Project validation tests
 │       ├── test_fal_tool.py   # FAL media tool tests
-│       └── test_image_generation.py # Image generation tests
+│       ├── test_image_generation.py # Image generation tests
+│       ├── test_validate_base64_image.py # Base64 image validation tests
+│       ├── test_token_compression.py # Token compression tests
+│       ├── test_custom_mcp.py # Custom MCP server tests
+│       └── test_mcp_use.py    # MCP usage tests
 ├── frontend/
 │   ├── .env.example           # Frontend environment template
 │   ├── package.json           # Node.js dependencies
@@ -182,6 +186,26 @@ NEXT_PUBLIC_URL=https://your-frontend-domain.com
 
 ## Recent Infrastructure Improvements
 
+### Enhanced Testing Framework
+- **New Test Files**: Comprehensive test suite in `backend/tests/`
+  - `test_validate_base64_image.py` - Base64 image validation with edge case testing
+  - `test_token_compression.py` - Token compression functionality tests
+  - `test_custom_mcp.py` - Custom MCP server integration tests
+  - `test_mcp_use.py` - MCP usage and tool execution tests
+- **Test Organization**: All tests moved to organized `backend/tests/` directory
+- **Enhanced Coverage**: Better testing for browser tools, image handling, and MCP integration
+
+### Browser Tool Enhancements
+- **Improved Screenshot Handling**: Better validation and error handling for different model types
+- **Zero-Byte Prevention**: Comprehensive validation prevents 0-byte screenshot generation
+- **Model-Specific Logic**: Enhanced handling based on model capabilities (GPT-4o, Claude, etc.)
+- **Better Debugging**: Enhanced logging and tracing for screenshot operations
+
+### Tolt Referral Integration
+- **Referral Tracking**: Automatic referral tracking in billing checkout flows
+- **Frontend Integration**: Referral data passed from frontend to backend seamlessly
+- **Billing Enhancement**: Referral information included in checkout session creation
+
 ### Unicode File Handling
 - **New Feature**: Automatic filename normalization for cross-platform compatibility
 - **Location**: `frontend/src/lib/utils/unicode.ts`
@@ -257,7 +281,10 @@ supabase db reset   # Reset local database
 # Backend tests (organized in backend/tests/)
 cd backend
 poetry run pytest tests/           # Run all tests
-poetry run pytest tests/test_fal_tool.py  # Specific test
+poetry run pytest tests/test_fal_tool.py  # FAL media tool tests
+poetry run pytest tests/test_validate_base64_image.py  # Image validation tests
+poetry run pytest tests/test_token_compression.py  # Token compression tests
+poetry run pytest tests/test_custom_mcp.py  # MCP tests
 
 # Frontend tests
 cd frontend

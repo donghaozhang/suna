@@ -1,0 +1,251 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Railway Testing - Core Testing Workflows
+
+## Overview
+
+This guide covers core Railway testing workflows for the Quriosity platform, including API testing, frontend validation, and essential CLI commands.
+
+## Testing Strategy & Workflow
+
+### Branch-Based Testing Approach
+```bash
+# Create feature branch for testing
+git checkout -b feature/your-feature-name
+
+# Make changes and test locally (optional)
+docker compose up
+
+# Push to Railway for testing
+git add .
+git commit -m "feat: your feature description"
+git push origin feature/your-feature-name
+```
+
+### Railway Auto-Deployment
+- Railway detects git push automatically
+- Builds and deploys all services
+- Provides unique deployment URLs for testing
+- Maintains separate environments per branch
+
+## API Testing on Railway
+
+### Health Check Testing
+```bash
+# Test backend health endpoint
+curl https://your-backend-url.railway.app/api/health
+
+# Expected response
+{
+  "status": "ok",
+  "timestamp": "2025-01-XX...",
+  "instance_id": "railway-instance-id"
+}
+```
+
+### Authentication Testing
+```bash
+# Test with JWT token
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     https://your-backend-url.railway.app/api/billing/subscription
+
+# Test without token (should return 401)
+curl https://your-backend-url.railway.app/api/billing/subscription
+```
+
+### API Endpoint Testing Checklist
+- [ ] **Health**: `/api/health` returns 200
+- [ ] **Authentication**: Auth endpoints work correctly
+- [ ] **Billing**: `/api/billing/*` endpoints accessible
+- [ ] **Agents**: `/api/agent/*` and `/api/agents/*` endpoints
+- [ ] **Threads**: `/api/thread/*` endpoints
+- [ ] **Projects**: `/api/project/*` endpoints
+- [ ] **Sandbox**: `/api/sandboxes/*` endpoints
+- [ ] **MCP**: `/api/mcp/*` endpoints for Model Context Protocol
+- [ ] **Transcription**: `/api/transcription` for audio processing
+
+## Frontend Testing on Railway
+
+### Browser Testing Workflow
+1. **Open Railway Frontend URL**
+   - Navigate to your Railway frontend deployment
+   - Open Browser DevTools (F12)
+
+2. **Network Tab Verification**
+   - Monitor API calls in Network tab
+   - Verify all calls use `/api/` prefix
+   - Check for 404 errors or failed requests
+
+3. **Console Error Monitoring**
+   - Watch for JavaScript errors
+   - Look for API-related error messages
+   - Verify no CORS issues
+
+### User Flow Testing
+```javascript
+// Test authentication flow
+1. Login/Signup process
+2. Dashboard loading
+3. Project creation
+4. Agent initiation
+5. Thread management
+6. File uploads/downloads
+7. Billing information display
+8. MCP server configuration
+```
+
+### Frontend Testing Checklist
+- [ ] **Page Loading**: All pages load without errors
+- [ ] **API Communication**: Frontend ↔ Backend communication works
+- [ ] **Authentication**: Login/logout flows functional
+- [ ] **Dashboard**: Data displays correctly
+- [ ] **Agent Features**: Agent creation and interaction
+- [ ] **File Operations**: Upload/download functionality
+- [ ] **Responsive Design**: Mobile and desktop layouts
+- [ ] **Dark/Light Mode**: Theme switching works
+- [ ] **MCP Integration**: MCP server browsing and configuration
+- [ ] **Tolt Referrals**: Referral tracking in billing flows
+
+## Railway CLI Testing Commands
+
+### Deployment Monitoring
+```bash
+# Watch deployment logs in real-time
+npx @railway/cli logs --service backend --follow
+npx @railway/cli logs --service frontend --follow
+
+# Check deployment status
+npx @railway/cli status
+npx @railway/cli ps
+
+# View recent deployments
+npx @railway/cli deployments
+```
+
+### Service Health Verification
+```bash
+# Check all services are running
+npx @railway/cli ps
+
+# Get service URLs for testing
+npx @railway/cli domain
+
+# View environment variables
+npx @railway/cli variables --service backend
+npx @railway/cli variables --service frontend
+```
+
+### Debugging Commands
+```bash
+# Connect to service shell for debugging
+npx @railway/cli shell --service backend
+
+# Check specific deployment logs
+npx @railway/cli logs --deployment DEPLOYMENT_ID
+
+# Redeploy services after fixes
+npx @railway/cli redeploy --service backend
+npx @railway/cli redeploy --service frontend
+npx @railway/cli redeploy --service worker
+
+# Redeploy all services after major changes
+npx @railway/cli redeploy --service backend && npx @railway/cli redeploy --service frontend
+
+# Force redeploy with latest code
+git push origin main && npx @railway/cli redeploy --service backend
+```
+
+## Recent Updates Testing
+
+### New Test Files (Backend)
+Test the newly added backend test files:
+```bash
+# Run base64 image validation tests
+poetry run pytest backend/tests/test_validate_base64_image.py -v
+
+# Run token compression tests
+poetry run pytest backend/tests/test_token_compression.py -v
+
+# Run MCP tests (moved to tests directory)
+poetry run pytest backend/tests/test_custom_mcp.py -v
+poetry run pytest backend/tests/test_mcp_use.py -v
+
+# Run all organized tests
+poetry run pytest backend/tests/ -v
+```
+
+### Browser Tool Enhancement Testing
+Test the enhanced browser tool with better screenshot handling:
+```bash
+# Test screenshot functionality with different models
+curl -X POST https://your-backend-url.railway.app/api/agent/run \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{"model": "gpt-4o", "tool": "browser_screenshot"}'
+
+# Verify no 0-byte screenshots are generated
+# Check logs for image validation messages
+npx @railway/cli logs --service backend | grep "image validation"
+```
+
+### Tolt Referral Testing
+Test the new referral tracking system:
+```bash
+# Frontend should include tolt referral in requests
+# Check browser console for: "Tolt Referral ID: ..."
+# Verify referral data is passed to billing endpoints
+
+# Test billing checkout with referral
+curl -X POST https://your-backend-url.railway.app/api/billing/create-checkout-session \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"price_id": "test_price", "tolt_referral": "test_ref"}'
+```
+
+## Quick Testing Checklist
+
+### Pre-Deployment
+- [ ] All tests pass locally: `pytest backend/tests/`
+- [ ] Frontend builds without errors: `npm run build`
+- [ ] No TypeScript errors: `npm run type-check`
+
+### Post-Deployment
+- [ ] Health endpoint returns 200
+- [ ] Authentication flows work
+- [ ] Core API endpoints accessible
+- [ ] Frontend loads and functions
+- [ ] No console errors in browser
+- [ ] New features work as expected
+
+### Error Monitoring
+- [ ] Check Railway logs for errors
+- [ ] Monitor browser console for JS errors
+- [ ] Verify API response codes
+- [ ] Test error handling scenarios
+
+## Troubleshooting
+
+### Common Issues
+1. **API 404 Errors**: Check Railway service URLs and routing
+2. **CORS Issues**: Verify `FRONTEND_URL` environment variable
+3. **Authentication Failures**: Check JWT token and Supabase config
+4. **Build Failures**: Check logs and dependencies
+
+### Quick Fixes
+```bash
+# Restart services
+npx @railway/cli redeploy --service backend
+npx @railway/cli redeploy --service frontend
+
+# Check environment variables
+npx @railway/cli variables --service backend
+
+# View real-time logs
+npx @railway/cli logs --service backend --follow
+```
+
+For advanced testing, automation scripts, and performance testing, see:
+- `railway-testing-automation.mdc` - Automated testing scripts and CI/CD
+- `railway-testing-advanced.mdc` - Performance, load, and integration testing
